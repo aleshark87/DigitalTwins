@@ -14,25 +14,18 @@ public final class LaunchSimCar {
      */
     public static void main(final String[] args) {
         CarClientConnection dittoClient = new CarClientConnection();
-        Runnable task = new Runnable() {
+        Runnable driveTask = new Runnable() {
             int counter = 0;
             
             @Override
             public void run() {
                 counter++;
-                /*Runnable runnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        noti.notified(counter);
-                    }
-                };
-                Thread thread = new Thread(runnable);
-                thread.start();*/
-            }
+                dittoClient.updateCarLocation(counter);
+            };
+            
         };
-        //ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
-        //exec.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
-        dittoClient.updateCarLocation();
+        ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
+        exec.scheduleAtFixedRate(driveTask, 0, 5, TimeUnit.SECONDS);
     }
     
 }
