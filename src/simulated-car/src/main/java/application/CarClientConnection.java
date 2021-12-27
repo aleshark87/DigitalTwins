@@ -25,7 +25,6 @@ public class CarClientConnection {
     private AuthenticationProvider<WebSocket> authenticationProvider;
     private MessagingProvider messagingProvider;
     private DittoClient client;
-    private static final String ALL_THINGS_STRING_MESSAGE = "allThings_stringMessage";
     
     private void createAuthProvider() {
         authenticationProvider = AuthenticationProviders.basic((
@@ -59,26 +58,24 @@ public class CarClientConnection {
         try {
             client.twin().startConsumption().toCompletableFuture().get();
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         System.out.println("Subscribed for Twin events");
         client.twin().registerForThingChanges("my-changes", change -> {
-           if (change.getAction() == ChangeAction.UPDATED) {
-               System.out.println("we");
-           }
+                System.out.println(change.getAction());
+                System.out.println(change.getThing().get().getFeatures().get().getFeature("status"));
         });
     }
-
+    /*
+     * Non funziona
     private void registerForMessages() {
         System.out.println("registering for messages");
-        /* Register for *all* messages of *all* things and provide payload as String */ /**/
         client.live().registerForMessage(ALL_THINGS_STRING_MESSAGE, "*", String.class, message -> {
             final String subject = message.getSubject();
             final Optional<String> payload = message.getPayload();
-            System.out.println("messaggino boi");
         });
-    }
+    }*/
+    
     
     public void updateCarLocation(final int counter) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(

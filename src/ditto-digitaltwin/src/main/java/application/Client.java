@@ -61,8 +61,7 @@ public class Client {
                 .toCompletableFuture()
                 .join();
         //createCarThing();
-        searchThings();
-        //deleteThing("car-01");
+        //searchThings();
         subscribeForNotification();
         Runnable task = new Runnable() {
 
@@ -75,7 +74,8 @@ public class Client {
         ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
         exec.scheduleAtFixedRate(task, 0, 5, TimeUnit.SECONDS);
     }
-    
+    /*
+     * Non funziona
     private void sendMessage() {
         final LiveThingHandle thingHandle = client.live().forId(ThingId.of("org.eclipse.ditto", "car-01"));
         client.live().message()
@@ -84,61 +84,52 @@ public class Client {
         .payload("Roof is on fire")
         .contentType("text/plain")
         .send();
-    }
+    }*/
     
     private void subscribeForNotification() {
         try {
             client.twin().startConsumption().toCompletableFuture().get();
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         System.out.println("Subscribed for Twin events");
         client.twin().registerForThingChanges("my-changes", change -> {
            if (change.getAction() == ChangeAction.UPDATED) {
-               //System.out.println("check");
                int engineMinutes = getFeatureProperties(change.getThing().get(), "status", "engine_minutes");
                checkForMaintenance(engineMinutes);
            }
         });
     }
-    
+    //Questo metodo dovrebbe fare parte di un altra classe ?
     private void checkForMaintenance(final int engineMinutes) {
-        if(engineMinutes > 10) {
+        System.out.println("check for Maintenance");
+        if(engineMinutes > 5) {
             //IDEA: fai nuova feature (fin dall'inizio) per segnalare manutenzione
-            // problemi nella realizzazione.. non mi funziano i messaggi
-            // soluzione: costante ricerca da parte della macchina
-            updateCarLocation(0);
+            System.out.println("Has togo into maintenance");
+            updateMaintenance();
         }
     }
     
-    public void updateCarLocation(final int counter) {
+    //Forse in un altra classe ?
+    private void updateMaintenance() {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom(
-                        "{\n"
+                JsonFactory.readFrom("{\n"
                         + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n"
                         + "  \"headers\": {\n"
                         + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                         + "  },\n"
-                        + "  \"path\": \"/features/status\",\n"
-                        + "  \"value\": {\n"
-                        + "    \"thingId\": \"org.eclipse.ditto:car-01\",\n" 
-                        + "    \"properties\": {\n"
-                        + "      \"engine_minutes\": " + 0 + "\n"
-                        + "    }\n"
-                        + "  }\n"
+                        + "  \"path\": \"/features/status/properties/need_maintenance\",\n"
+                        + "  \"value\": true\n"
                         + "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
             if (a != null) {
-                System.out.println("sendDittoProtocol: Received adaptable as response: {}" + a);
+                System.out.println(a);
             }
             if (t != null) {
-                //System.out.println("sendDittoProtocol: Received throwable as response" + t);
+                System.out.println("sendDittoProtocol: Received throwable as response" + t);
             }
         });
     }
-    
-    
     
     private int getFeatureProperties(final Thing thing, final String featureId, final String propertyId) {
         return thing.getFeatures().get().getFeature(featureId).get().getProperties().get().getValue(propertyId).get().asInt();
@@ -149,13 +140,14 @@ public class Client {
         .stream(queryBuilder -> queryBuilder.namespace("org.eclipse.ditto")
            .options(builder -> builder.sort(s -> s.desc("thingId")).size(1))
         )
-        .forEach(foundThing -> System.out.println("Found thing: " + foundThing));
+        .forEach(foundThing -> System.out.println(getFeatureProperties(foundThing, "status", "engine_minutes")));
     }
     
     private void createCarThing() {
+        System.out.println("Creating Twin \"org.eclipse.ditto:car-01\"");
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n" +
-                        "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n" +
+                        "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/create\",\n" +
                         "  \"headers\": {},\n" +
                         "  \"path\": \"/\",\n" +
                         "  \"value\": {\n" +
@@ -169,7 +161,8 @@ public class Client {
                         "    \"features\": {\n" +
                         "      \"status\": {\n" +
                         "        \"properties\": {\n" +
-                        "          \"engine_minutes\": 0\n" +
+                        "          \"engine_minutes\": 0,\n" +
+                        "          \"need_maintenance\": false\n" +
                         "        }\n" +
                         "      }\n" +
                         "    }\n" +
@@ -177,20 +170,7 @@ public class Client {
                         "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
             if (a != null) {
-                System.out.println("sendDittoProtocol: Received adaptable as response: {}" + a);
-            }
-            if (t != null) {
-                System.out.println("sendDittoProtocol: Received throwable as response" + t);
-            }
-        });
-    }
-    
-    private void createPolicy() {
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("").asObject());
-        client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
-            if (a != null) {
-                System.out.println("sendDittoProtocol: Received adaptable as response: {}" + a);
+                System.out.println(a.getPayload().getValue().get());
             }
             if (t != null) {
                 System.out.println("sendDittoProtocol: Received throwable as response" + t);
@@ -206,10 +186,10 @@ public class Client {
                         + "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
             if (a != null) {
-                System.out.println("sendDittoProtocol: Received adaptable as response: {}" + a);
+                System.out.println("Deleted thing " + thingId);
             }
             if (t != null) {
-                System.out.println("sendDittoProtocol: Received throwable as response" + t);
+                System.out.println("Couldn't delete thing " + thingId + ", because " + t);
             }
         });
         }
