@@ -1,11 +1,10 @@
 package application;
 
-import java.util.Optional;
-
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DittoClient;
 import org.eclipse.ditto.client.DittoClients;
-import org.eclipse.ditto.client.changes.ChangeAction;
+
+import org.eclipse.ditto.client.changes.ThingChange;
 import org.eclipse.ditto.client.configuration.BasicAuthenticationConfiguration;
 import org.eclipse.ditto.client.configuration.MessagingConfiguration;
 import org.eclipse.ditto.client.configuration.WebSocketMessagingConfiguration;
@@ -16,12 +15,14 @@ import org.eclipse.ditto.client.messaging.MessagingProviders;
 import org.eclipse.ditto.json.JsonFactory;
 import org.eclipse.ditto.protocol.JsonifiableAdaptable;
 import org.eclipse.ditto.protocol.ProtocolFactory;
-import org.slf4j.Logger;
 
 import com.neovisionaries.ws.client.WebSocket;
 
+import controller.SimCarController;
+
 public class CarClientConnection {
     
+    private SimCarController controller;
     private AuthenticationProvider<WebSocket> authenticationProvider;
     private MessagingProvider messagingProvider;
     private DittoClient client;
@@ -43,7 +44,8 @@ public class CarClientConnection {
         messagingProvider = MessagingProviders.webSocket(builder.build(), authenticationProvider);
     }
     
-    public CarClientConnection() {
+    public CarClientConnection(SimCarController controller) {
+        this.controller = controller;
         createAuthProvider();
         createMessageProvider();
         client = DittoClients.newInstance(messagingProvider)
@@ -54,6 +56,10 @@ public class CarClientConnection {
         //registerForMessages();
     }
     
+    private boolean getMaintenanceStatus(ThingChange change) {
+        return change.getThing().get().getFeatures().get().getFeature("status").get().getProperties().get().getValue("need_maintenance").get().asBoolean();
+    }
+    
     private void subscribeForNotification() {
         try {
             client.twin().startConsumption().toCompletableFuture().get();
@@ -62,43 +68,52 @@ public class CarClientConnection {
         }
         System.out.println("Subscribed for Twin events");
         client.twin().registerForThingChanges("my-changes", change -> {
-                System.out.println(change.getAction());
-                System.out.println(change.getThing().get().getFeatures().get().getFeature("status"));
+                if(getMaintenanceStatus(change) == true) {
+                    controller.getCarSimulation().maintenance();
+                }
+                if(getMaintenanceStatus(change) == false) {
+                    controller.getCarSimulation().maintenanceDone();
+                    controller.getCarSimulation().startCar();
+                }
         });
     }
-    /*
-     * Non funziona
-    private void registerForMessages() {
-        System.out.println("registering for messages");
-        client.live().registerForMessage(ALL_THINGS_STRING_MESSAGE, "*", String.class, message -> {
-            final String subject = message.getSubject();
-            final Optional<String> payload = message.getPayload();
-        });
-    }*/
     
-    
-    public void updateCarLocation(final int counter) {
+    public void updateMaintenanceTime(int time) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom(
-                        "{\n"
+                JsonFactory.readFrom("{\n"
                         + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n"
                         + "  \"headers\": {\n"
                         + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                         + "  },\n"
-                        + "  \"path\": \"/features/status\",\n"
-                        + "  \"value\": {\n"
-                        + "    \"thingId\": \"org.eclipse.ditto:car-01\",\n" 
-                        + "    \"properties\": {\n"
-                        + "      \"engine_minutes\": " + (counter) + "\n"
-                        + "    }\n"
-                        + "  }\n"
+                        + "  \"path\": \"/features/status/properties/maintenance_time\",\n"
+                        + "  \"value\": " + time + "\n"
                         + "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
             if (a != null) {
-                //System.out.println("sendDittoProtocol: Received adaptable as response: {}" + a);
+                //System.out.println(a);
             }
             if (t != null) {
-                //System.out.println("sendDittoProtocol: Received throwable as response" + t);
+                System.out.println("sendDittoProtocol: Received throwable as response" + t);
+            }
+        });
+    }
+    
+    public void updateCarEngine(final int counter) {
+        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+                JsonFactory.readFrom("{\n"
+                        + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n"
+                        + "  \"headers\": {\n"
+                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                        + "  },\n"
+                        + "  \"path\": \"/features/status/properties/engine_minutes\",\n"
+                        + "  \"value\": " + counter + "\n"
+                        + "}").asObject());
+        client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
+            if (a != null) {
+                //System.out.println(a);
+            }
+            if (t != null) {
+                System.out.println("sendDittoProtocol: Received throwable as response" + t);
             }
         });
     }

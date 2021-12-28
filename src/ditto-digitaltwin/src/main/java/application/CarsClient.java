@@ -1,5 +1,7 @@
 package application;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -7,15 +9,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
+import org.eclipse.ditto.base.model.common.HttpStatus;
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DittoClient;
 import org.eclipse.ditto.client.DittoClients;
 import org.eclipse.ditto.client.changes.ChangeAction;
+import org.eclipse.ditto.client.changes.ThingChange;
 import org.eclipse.ditto.client.configuration.BasicAuthenticationConfiguration;
 import org.eclipse.ditto.client.configuration.MessagingConfiguration;
 import org.eclipse.ditto.client.configuration.WebSocketMessagingConfiguration;
-import org.eclipse.ditto.client.live.LiveThingHandle;
-import org.eclipse.ditto.client.management.ThingHandle;
 import org.eclipse.ditto.client.messaging.AuthenticationProvider;
 import org.eclipse.ditto.client.messaging.AuthenticationProviders;
 import org.eclipse.ditto.client.messaging.MessagingProvider;
@@ -25,16 +27,15 @@ import org.eclipse.ditto.protocol.Adaptable;
 import org.eclipse.ditto.protocol.JsonifiableAdaptable;
 import org.eclipse.ditto.protocol.ProtocolFactory;
 import org.eclipse.ditto.things.model.Thing;
-import org.eclipse.ditto.things.model.ThingId;
-import org.eclipse.ditto.things.model.ThingsModelFactory;
 
 import com.neovisionaries.ws.client.WebSocket;
 
-public class Client {
+public class CarsClient {
     
     private AuthenticationProvider<WebSocket> authenticationProvider;
     private MessagingProvider messagingProvider;
     private DittoClient client;
+    private MaintenanceSupervisor supervisor;
     
     private void createAuthProvider() {
         authenticationProvider = AuthenticationProviders.basic((
@@ -53,38 +54,43 @@ public class Client {
         messagingProvider = MessagingProviders.webSocket(builder.build(), authenticationProvider);
     }
     
-    public Client() {
+    public CarsClient() {
         createAuthProvider();
         createMessageProvider();
         client = DittoClients.newInstance(messagingProvider)
                 .connect()
                 .toCompletableFuture()
                 .join();
-        //createCarThing();
-        //searchThings();
+        
+        if(checkIfThingExists().getCode() == 404) {
+        	createCarThing();
+        }
+        else {
+        	resetThing();
+        }
         subscribeForNotification();
+        supervisor = new MaintenanceSupervisor(this);
         Runnable task = new Runnable() {
 
             @Override
             public void run() {
-                searchThings();
+                //searchThings();
             }
             
         };
         ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
-        exec.scheduleAtFixedRate(task, 0, 5, TimeUnit.SECONDS);
+        exec.scheduleAtFixedRate(task, 0, 3, TimeUnit.SECONDS);
     }
-    /*
-     * Non funziona
-    private void sendMessage() {
-        final LiveThingHandle thingHandle = client.live().forId(ThingId.of("org.eclipse.ditto", "car-01"));
-        client.live().message()
-        .to(ThingId.of("org.eclipse.ditto", "car-01"))
-        .subject("monitoring.building.fireAlert")
-        .payload("Roof is on fire")
-        .contentType("text/plain")
-        .send();
-    }*/
+    
+    
+
+    private void searchThings() {
+        client.twin().search()
+        .stream(queryBuilder -> queryBuilder.namespace("org.eclipse.ditto")
+           .options(builder -> builder.sort(s -> s.desc("thingId")).size(1))
+        )
+        .forEach(foundThing -> System.out.println(foundThing.getFeatures().get().getFeature("status").get().getProperties().get()));
+    }
     
     private void subscribeForNotification() {
         try {
@@ -95,23 +101,25 @@ public class Client {
         System.out.println("Subscribed for Twin events");
         client.twin().registerForThingChanges("my-changes", change -> {
            if (change.getAction() == ChangeAction.UPDATED) {
-               int engineMinutes = getFeatureProperties(change.getThing().get(), "status", "engine_minutes");
-               checkForMaintenance(engineMinutes);
+        	   if(!supervisor.getMaintenanceStatus() && getChangedPropertiesName(change).equals("engine_minutes")) {
+        		   int engineMinutes = getFeatureProperties(change.getThing().get(), "status", "engine_minutes");
+                   supervisor.checkForMaintenance(engineMinutes);
+        	   }
+        	   else {
+        		   int maintenanceTime = getFeatureProperties(change.getThing().get(), "status", "maintenance_time");
+        		   supervisor.checkForEndMaintenance(maintenanceTime);
+        	   }
            }
         });
     }
-    //Questo metodo dovrebbe fare parte di un altra classe ?
-    private void checkForMaintenance(final int engineMinutes) {
-        System.out.println("check for Maintenance");
-        if(engineMinutes > 5) {
-            //IDEA: fai nuova feature (fin dall'inizio) per segnalare manutenzione
-            System.out.println("Has togo into maintenance");
-            updateMaintenance();
-        }
+    
+    private String getChangedPropertiesName(ThingChange change) {
+    	return change.getThing().get().getFeatures().get().getFeature("status").get().getProperties().get().getKeys().get(0).toString();
     }
     
-    //Forse in un altra classe ?
-    private void updateMaintenance() {
+    
+    
+    void updateMaintenance(boolean value) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
                         + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n"
@@ -119,11 +127,11 @@ public class Client {
                         + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                         + "  },\n"
                         + "  \"path\": \"/features/status/properties/need_maintenance\",\n"
-                        + "  \"value\": true\n"
+                        + "  \"value\": " + value + "\n"
                         + "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
             if (a != null) {
-                System.out.println(a);
+                //System.out.println(a);
             }
             if (t != null) {
                 System.out.println("sendDittoProtocol: Received throwable as response" + t);
@@ -133,14 +141,6 @@ public class Client {
     
     private int getFeatureProperties(final Thing thing, final String featureId, final String propertyId) {
         return thing.getFeatures().get().getFeature(featureId).get().getProperties().get().getValue(propertyId).get().asInt();
-    }
-    
-    private void searchThings() {
-        client.twin().search()
-        .stream(queryBuilder -> queryBuilder.namespace("org.eclipse.ditto")
-           .options(builder -> builder.sort(s -> s.desc("thingId")).size(1))
-        )
-        .forEach(foundThing -> System.out.println(getFeatureProperties(foundThing, "status", "engine_minutes")));
     }
     
     private void createCarThing() {
@@ -162,7 +162,8 @@ public class Client {
                         "      \"status\": {\n" +
                         "        \"properties\": {\n" +
                         "          \"engine_minutes\": 0,\n" +
-                        "          \"need_maintenance\": false\n" +
+                        "          \"need_maintenance\": false,\n" +
+                        "          \"maintenance_time\": 0\n" +
                         "        }\n" +
                         "      }\n" +
                         "    }\n" +
@@ -178,20 +179,57 @@ public class Client {
         });
     }
     
-    private void deleteThing(final String thingId) {
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+    private HttpStatus checkIfThingExists() {
+    	
+    	JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"org.eclipse.ditto/" + thingId + "/things/twin/commands/delete\",\n"
-                        + "  \"path\": \"/\"\n"
-                        + "}").asObject());
+                		+ "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/retrieve\",\n"
+                		+ "  \"headers\": {\n"
+                		+ "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                		+ "  },\n"
+                		+ "  \"path\": \"/\"\n"
+                		+ "}").asObject());
+    	HttpStatus p = null;
+    	
+        try {
+            Adaptable adapt = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().get();
+            p = adapt.getPayload().getHttpStatus().get();
+            if(p.getCode() != 404) {
+            	//System.out.println(adapt.getPayload().getValue().get());
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        return p;
+    }
+    
+    private void resetThing() {
+    	JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+                JsonFactory.readFrom("{\n"
+                		+ "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n"
+                		+ "  \"headers\": {\n"
+                		+ "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                		+ "  },\n"
+                		+ "  \"path\": \"/features/status\",\n"
+                		+ "  \"value\": {\n"
+                		+ "    \"properties\": {\n"
+                		+ "      \"engine_minutes\": 0,\n"
+                		+ "      \"need_maintenance\": false,\n"
+                		+ "      \"maintenance_time\": 0\n"
+                		+ "    }\n"
+                		+ "  }\n"
+                		+ " }\n"
+                		).asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
             if (a != null) {
-                System.out.println("Deleted thing " + thingId);
+                //System.out.println(a);
             }
             if (t != null) {
-                System.out.println("Couldn't delete thing " + thingId + ", because " + t);
+                //System.out.println("sendDittoProtocol: Received throwable as response" + t);
             }
         });
-        }
+    }
 
 }
