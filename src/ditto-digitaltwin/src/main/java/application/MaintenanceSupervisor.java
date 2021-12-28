@@ -2,6 +2,8 @@ package application;
 
 public class MaintenanceSupervisor {
     
+    private final int engineNeedMaintenance = 3;
+    private final int maintenanceDuration = 3;
     private boolean maintenanceStatus;
     private CarsClient client;
     
@@ -11,14 +13,14 @@ public class MaintenanceSupervisor {
     }
     
     public void checkForMaintenance(final int engineMinutes) {
-        if(engineMinutes > 5) {
+        if(engineMinutes >= engineNeedMaintenance) {
             maintenanceStatus = true;
             client.updateMaintenance(true);
         }
     }
     
     public void checkForEndMaintenance(final int maintenanceTime) {
-        if(maintenanceTime > 10) {
+        if(maintenanceTime >= maintenanceDuration) {
             maintenanceStatus = false;
             client.updateMaintenance(false);
         }

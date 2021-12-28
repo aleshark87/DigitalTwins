@@ -3,12 +3,12 @@ package controller;
 import application.CarClientConnection;
 import application.SimCar;
 
-public class SimCarController {
+public class RunCarSimulation {
     
     private SimCar carSimulation;
     private CarClientConnection connection;
     
-    public SimCarController() {
+    public RunCarSimulation() {
         carSimulation = new SimCar(this);
         connection = new CarClientConnection(this);
         carSimulation.startCar();
@@ -23,7 +23,7 @@ public class SimCarController {
     }
     
     public static void main(String[] args) {
-        new SimCarController();
+        new RunCarSimulation();
     }
 
 }

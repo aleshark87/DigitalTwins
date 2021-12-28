@@ -1,27 +1,25 @@
 package application;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import controller.SimCarController;
+import controller.RunCarSimulation;
 import tasks.DriveTask;
 import tasks.MaintenanceTask;
 
 public class SimCar {
     
-    private SimCarController controller;
+    private RunCarSimulation controller;
     private ScheduledExecutorService exec;
     private DriveTask driveTask;
     private MaintenanceTask maintenanceTask;
     
-    public SimCar(SimCarController controller) {
+    public SimCar(RunCarSimulation controller) {
         this.controller = controller;
-        exec = Executors.newSingleThreadScheduledExecutor();
         driveTask = new DriveTask(this);
         maintenanceTask = new MaintenanceTask(this);
+        exec = Executors.newSingleThreadScheduledExecutor();
+        //Faccio partire i task che regolano la guida e la manutenzione
         exec.scheduleAtFixedRate(driveTask, 0, 3, TimeUnit.SECONDS);
         exec.scheduleAtFixedRate(maintenanceTask, 0, 3, TimeUnit.SECONDS);
     }
@@ -44,7 +42,7 @@ public class SimCar {
         
     }
     
-    public SimCarController getController() {
+    public RunCarSimulation getController() {
         return controller;
     }
     

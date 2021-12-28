@@ -3,7 +3,6 @@ package application;
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DittoClient;
 import org.eclipse.ditto.client.DittoClients;
-
 import org.eclipse.ditto.client.changes.ThingChange;
 import org.eclipse.ditto.client.configuration.BasicAuthenticationConfiguration;
 import org.eclipse.ditto.client.configuration.MessagingConfiguration;
@@ -15,14 +14,13 @@ import org.eclipse.ditto.client.messaging.MessagingProviders;
 import org.eclipse.ditto.json.JsonFactory;
 import org.eclipse.ditto.protocol.JsonifiableAdaptable;
 import org.eclipse.ditto.protocol.ProtocolFactory;
-
 import com.neovisionaries.ws.client.WebSocket;
 
-import controller.SimCarController;
+import controller.RunCarSimulation;
 
 public class CarClientConnection {
     
-    private SimCarController controller;
+    private RunCarSimulation controller;
     private AuthenticationProvider<WebSocket> authenticationProvider;
     private MessagingProvider messagingProvider;
     private DittoClient client;
@@ -44,7 +42,7 @@ public class CarClientConnection {
         messagingProvider = MessagingProviders.webSocket(builder.build(), authenticationProvider);
     }
     
-    public CarClientConnection(SimCarController controller) {
+    public CarClientConnection(RunCarSimulation controller) {
         this.controller = controller;
         createAuthProvider();
         createMessageProvider();
@@ -53,7 +51,6 @@ public class CarClientConnection {
                 .toCompletableFuture()
                 .join();
         subscribeForNotification();
-        //registerForMessages();
     }
     
     private boolean getMaintenanceStatus(ThingChange change) {
@@ -68,9 +65,11 @@ public class CarClientConnection {
         }
         System.out.println("Subscribed for Twin events");
         client.twin().registerForThingChanges("my-changes", change -> {
+                //Esegue la manutenzione fermandosi quando lo notifica
                 if(getMaintenanceStatus(change) == true) {
                     controller.getCarSimulation().maintenance();
                 }
+                //Se viene notificata la fine della manutenzione, Thing Car riparte
                 if(getMaintenanceStatus(change) == false) {
                     controller.getCarSimulation().maintenanceDone();
                     controller.getCarSimulation().startCar();
@@ -78,6 +77,7 @@ public class CarClientConnection {
         });
     }
     
+    //Dialoga col Thing per fare l'update del tempo di manutenzione
     public void updateMaintenanceTime(int time) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
@@ -97,7 +97,7 @@ public class CarClientConnection {
             }
         });
     }
-    
+  //Dialoga col Thing per fare l'update del tempo del motore
     public void updateCarEngine(final int counter) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
