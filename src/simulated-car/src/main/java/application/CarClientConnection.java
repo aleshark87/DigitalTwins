@@ -64,6 +64,8 @@ public class CarClientConnection {
             e.printStackTrace();
         }
         System.out.println("Subscribed for Twin events");
+        //Non andrebbe usato
+        /* Non sono sicuro non debba essere usato affatto. Unica cosa: i segnali potrebbero venire tramite Events e non Commands */
         client.twin().registerForThingChanges("my-changes", change -> {
                 //Esegue la manutenzione fermandosi quando lo notifica
                 if(getMaintenanceStatus(change) == true) {
@@ -98,6 +100,7 @@ public class CarClientConnection {
         });
     }
   //Dialoga col Thing per fare l'update del tempo del motore
+    // DOvrebbe comunicare col DT tramite i protocolli giusti
     public void updateCarEngine(final int counter) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"

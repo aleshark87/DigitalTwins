@@ -91,7 +91,6 @@ public class CarsClient {
             e.printStackTrace();
         }
         System.out.println("Subscribed for Twin events");
-        
         client.twin().registerForThingChanges("car-changes", change -> {
            if (change.getAction() == ChangeAction.UPDATED) {
                //Solo per stampare meglio il testo
@@ -161,6 +160,7 @@ public class CarsClient {
     }
     
     //Crea il Thing Car
+    //Andrebbe fatta nella simulazione
     private void createCarThing() {
         System.out.println("Creating Twin \"org.eclipse.ditto:car-01\"");
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
@@ -189,7 +189,7 @@ public class CarsClient {
                         "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
             if (a != null) {
-                System.out.println(a.getPayload().getValue().get());
+                System.out.println(a);
             }
             if (t != null) {
                 System.out.println("sendDittoProtocol: Received throwable as response" + t);
