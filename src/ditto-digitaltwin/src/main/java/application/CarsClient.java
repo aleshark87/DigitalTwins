@@ -98,6 +98,7 @@ public class CarsClient {
                if(text.v1()) {
                    System.out.println(text.v2().get());
                }
+               // NOTIFICHE PROVENIENTE DALLO SHADOWING DELLA CAR
                //Quando ricevo una notifica che cambia il tempo del motore, controllo se è necessario eseguire manutenzione
         	   if(!supervisor.getMaintenanceStatus() && getChangedPropertiesName(change).equals("engine_minutes")) {
         		   int engineMinutes = getFeatureProperties(change.getThing().get(), "status", "engine_minutes");
@@ -134,7 +135,8 @@ public class CarsClient {
     	return change.getThing().get().getFeatures().get().getFeature("status").get().getProperties().get().getKeys().get(0).toString();
     }
     
-    //Segnala al Thing Car che è necessario eseguire manutenzione
+    //Da provare con EVENTS
+    //Segnala al Thing Car che è necessario eseguire manutenzione, oppure che è finita
     void updateMaintenance(boolean value) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"

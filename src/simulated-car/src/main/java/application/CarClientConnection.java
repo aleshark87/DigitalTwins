@@ -67,6 +67,7 @@ public class CarClientConnection {
         //Non andrebbe usato
         /* Non sono sicuro non debba essere usato affatto. Unica cosa: i segnali potrebbero venire tramite Events e non Commands */
         client.twin().registerForThingChanges("my-changes", change -> {
+                System.out.println(change);
                 //Esegue la manutenzione fermandosi quando lo notifica
                 if(getMaintenanceStatus(change) == true) {
                     controller.getCarSimulation().maintenance();
