@@ -1,5 +1,8 @@
 package application;
 
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DittoClient;
 import org.eclipse.ditto.client.DittoClients;
@@ -7,6 +10,7 @@ import org.eclipse.ditto.client.changes.ThingChange;
 import org.eclipse.ditto.client.configuration.BasicAuthenticationConfiguration;
 import org.eclipse.ditto.client.configuration.MessagingConfiguration;
 import org.eclipse.ditto.client.configuration.WebSocketMessagingConfiguration;
+import org.eclipse.ditto.client.live.LiveThingHandle;
 import org.eclipse.ditto.client.messaging.AuthenticationProvider;
 import org.eclipse.ditto.client.messaging.AuthenticationProviders;
 import org.eclipse.ditto.client.messaging.MessagingProvider;
@@ -14,6 +18,8 @@ import org.eclipse.ditto.client.messaging.MessagingProviders;
 import org.eclipse.ditto.json.JsonFactory;
 import org.eclipse.ditto.protocol.JsonifiableAdaptable;
 import org.eclipse.ditto.protocol.ProtocolFactory;
+import org.eclipse.ditto.things.model.ThingId;
+
 import com.neovisionaries.ws.client.WebSocket;
 
 import controller.RunCarSimulation;
@@ -50,24 +56,33 @@ public class CarClientConnection {
                 .connect()
                 .toCompletableFuture()
                 .join();
-        subscribeForNotification();
+        try {
+            client.live().startConsumption().toCompletableFuture().get();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        subscribeForMessages();
     }
     
-    private boolean getMaintenanceStatus(ThingChange change) {
-        return change.getThing().get().getFeatures().get().getFeature("status").get().getProperties().get().getValue("need_maintenance").get().asBoolean();
+    private void subscribeForMessages() {
+        ThingId thingId = ThingId.of("org.eclipse.ditto", "car-01");
+        final LiveThingHandle thingId2 = client.live().forId(thingId);
+        // Register for *all* messages of a *specific* thing and provide payload as String
+        thingId2.registerForMessage("MsgRegistration", "*", String.class, message -> {
+            final String subject = message.getSubject();
+            final Optional<String> payload = message.getPayload();
+            System.out.println(payload.get());
+        });
     }
     
     private void subscribeForNotification() {
-        try {
-            client.twin().startConsumption().toCompletableFuture().get();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.out.println("Subscribed for Twin events");
-        //Non andrebbe usato
-        /* Non sono sicuro non debba essere usato affatto. Unica cosa: i segnali potrebbero venire tramite Events e non Commands */
+        /*
         client.twin().registerForThingChanges("my-changes", change -> {
-                System.out.println(change);
+                System.out.println(getMaintenanceStatus(change));
                 //Esegue la manutenzione fermandosi quando lo notifica
                 if(getMaintenanceStatus(change) == true) {
                     controller.getCarSimulation().maintenance();
@@ -78,9 +93,10 @@ public class CarClientConnection {
                     controller.getCarSimulation().startCar();
                 }
         });
+        */
     }
     
-    //Dialoga col Thing per fare l'update del tempo di manutenzione
+    //Shadowing tempo di manutenzione
     public void updateMaintenanceTime(int time) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
@@ -100,8 +116,8 @@ public class CarClientConnection {
             }
         });
     }
-  //Dialoga col Thing per fare l'update del tempo del motore
-    // DOvrebbe comunicare col DT tramite i protocolli giusti
+
+    //Shadowing Tempo Motore
     public void updateCarEngine(final int counter) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"

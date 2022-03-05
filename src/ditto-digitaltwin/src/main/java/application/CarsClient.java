@@ -22,6 +22,8 @@ import org.eclipse.ditto.protocol.Adaptable;
 import org.eclipse.ditto.protocol.JsonifiableAdaptable;
 import org.eclipse.ditto.protocol.ProtocolFactory;
 import org.eclipse.ditto.things.model.Thing;
+import org.eclipse.ditto.things.model.ThingId;
+
 import com.andrebreves.tuple.Tuple;
 import com.andrebreves.tuple.Tuple2;
 import com.neovisionaries.ws.client.WebSocket;
@@ -71,6 +73,7 @@ public class CarsClient {
         }
         
         subscribeForNotification();
+        //inizializzazioneCanaleLive?
         supervisor = new MaintenanceSupervisor(this);
     }
     
@@ -91,6 +94,9 @@ public class CarsClient {
             e.printStackTrace();
         }
         System.out.println("Subscribed for Twin events");
+        
+        /*client.twin().registerForFeaturePropertyChanges(registrationId, featureId, handler);*/
+        /* L'idea è di creare una feature per tutte le parti del motore ed una feature per tutte le manutenzioni alle parti */
         client.twin().registerForThingChanges("car-changes", change -> {
            if (change.getAction() == ChangeAction.UPDATED) {
                //Solo per stampare meglio il testo
@@ -135,9 +141,9 @@ public class CarsClient {
     	return change.getThing().get().getFeatures().get().getFeature("status").get().getProperties().get().getKeys().get(0).toString();
     }
     
-    //Da provare con EVENTS
     //Segnala al Thing Car che è necessario eseguire manutenzione, oppure che è finita
     void updateMaintenance(boolean value) {
+        /*
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
                         + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n"
@@ -145,16 +151,33 @@ public class CarsClient {
                         + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                         + "  },\n"
                         + "  \"path\": \"/features/status/properties/need_maintenance\",\n"
-                        + "  \"value\": " + value + "\n"
+                        + "  \"value\": " + value + ",\n"
+                        + "  \"revision\": 1\n"
                         + "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
             if (a != null) {
-                //System.out.println(a);
+                System.out.println(printThingFeatures());
+                System.out.println(a);
             }
             if (t != null) {
                 System.out.println("sendDittoProtocol: Received throwable as response" + t);
             }
         });
+        */
+        ThingId thingId = ThingId.of("org.eclipse.ditto", "car-01");
+        String payloadString = "";
+        if(value) {
+            payloadString = "DoMaintenance";
+        }
+        else {
+            payloadString = "DoneMaintenance";
+        }
+        client.live().message()
+        .to(thingId)
+        .subject("supervisor.maintenance")
+        .payload(payloadString)
+        .contentType("text/plain")
+        .send();
     }
     
     private int getFeatureProperties(final Thing thing, final String featureId, final String propertyId) {
@@ -182,7 +205,6 @@ public class CarsClient {
                         "      \"status\": {\n" +
                         "        \"properties\": {\n" +
                         "          \"engine_minutes\": 0,\n" +
-                        "          \"need_maintenance\": false,\n" +
                         "          \"maintenance_time\": 0\n" +
                         "        }\n" +
                         "      }\n" +
@@ -191,7 +213,7 @@ public class CarsClient {
                         "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
             if (a != null) {
-                System.out.println(a);
+                //System.out.println(a);
             }
             if (t != null) {
                 System.out.println("sendDittoProtocol: Received throwable as response" + t);
@@ -238,7 +260,6 @@ public class CarsClient {
                 		+ "  \"value\": {\n"
                 		+ "    \"properties\": {\n"
                 		+ "      \"engine_minutes\": 0,\n"
-                		+ "      \"need_maintenance\": false,\n"
                 		+ "      \"maintenance_time\": 0\n"
                 		+ "    }\n"
                 		+ "  }\n"
