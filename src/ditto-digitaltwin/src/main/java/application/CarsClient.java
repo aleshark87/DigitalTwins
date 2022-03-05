@@ -84,7 +84,7 @@ public class CarsClient {
                                  .search()
                                  .stream(queryBuilder -> queryBuilder.namespace("org.eclipse.ditto"))
                                  .collect(Collectors.toList());
-        return list.get(0).getFeatures().get().getFeature("status").get().getProperties().get().toString();
+        return list.get(0).getFeatures().get().getFeature("parts_time").get().getProperties().get().toString();
     }
     
     private void subscribeForNotification() {
@@ -96,7 +96,7 @@ public class CarsClient {
         System.out.println("Subscribed for Twin events");
         
         /*client.twin().registerForFeaturePropertyChanges(registrationId, featureId, handler);*/
-        /* L'idea è di creare una feature per tutte le parti del motore ed una feature per tutte le manutenzioni alle parti */
+        /* L'idea è di creare una feature per tutte le parti della macchina ed una feature per tutte le manutenzioni alle parti */
         client.twin().registerForThingChanges("car-changes", change -> {
            if (change.getAction() == ChangeAction.UPDATED) {
                //Solo per stampare meglio il testo
@@ -106,6 +106,7 @@ public class CarsClient {
                }
                // NOTIFICHE PROVENIENTE DALLO SHADOWING DELLA CAR
                //Quando ricevo una notifica che cambia il tempo del motore, controllo se è necessario eseguire manutenzione
+               /*
         	   if(!supervisor.getMaintenanceStatus() && getChangedPropertiesName(change).equals("engine_minutes")) {
         		   int engineMinutes = getFeatureProperties(change.getThing().get(), "status", "engine_minutes");
                    supervisor.checkForMaintenance(engineMinutes);
@@ -115,6 +116,7 @@ public class CarsClient {
         		   int maintenanceTime = getFeatureProperties(change.getThing().get(), "status", "maintenance_time");
         		   supervisor.checkForEndMaintenance(maintenanceTime);
         	   }
+        	   */
            }
         });
     }
@@ -143,27 +145,6 @@ public class CarsClient {
     
     //Segnala al Thing Car che è necessario eseguire manutenzione, oppure che è finita
     void updateMaintenance(boolean value) {
-        /*
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n"
-                        + "  \"headers\": {\n"
-                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                        + "  },\n"
-                        + "  \"path\": \"/features/status/properties/need_maintenance\",\n"
-                        + "  \"value\": " + value + ",\n"
-                        + "  \"revision\": 1\n"
-                        + "}").asObject());
-        client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
-            if (a != null) {
-                System.out.println(printThingFeatures());
-                System.out.println(a);
-            }
-            if (t != null) {
-                System.out.println("sendDittoProtocol: Received throwable as response" + t);
-            }
-        });
-        */
         ThingId thingId = ThingId.of("org.eclipse.ditto", "car-01");
         String payloadString = "";
         if(value) {
@@ -173,11 +154,11 @@ public class CarsClient {
             payloadString = "DoneMaintenance";
         }
         client.live().message()
-        .to(thingId)
-        .subject("supervisor.maintenance")
-        .payload(payloadString)
-        .contentType("text/plain")
-        .send();
+                               .to(thingId)
+                               .subject("supervisor.maintenance")
+                               .payload(payloadString)
+                               .contentType("text/plain")
+                               .send();
     }
     
     private int getFeatureProperties(final Thing thing, final String featureId, final String propertyId) {
@@ -189,28 +170,34 @@ public class CarsClient {
     private void createCarThing() {
         System.out.println("Creating Twin \"org.eclipse.ditto:car-01\"");
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n" +
-                        "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/create\",\n" +
-                        "  \"headers\": {},\n" +
-                        "  \"path\": \"/\",\n" +
-                        "  \"value\": {\n" +
-                        "    \"thingId\": \"org.eclipse.ditto:car-01\",\n" +
-                        "    \"attributes\": {\n" +
-                        "      \"Data\": {\n" +
-                        "        \"manufacture_place\": \"Rome\",\n" +
-                        "        \"manufacture_date\": \"01-01-2021\"\n" +
-                        "      }\n" +
-                        "    },\n" +
-                        "    \"features\": {\n" +
-                        "      \"status\": {\n" +
-                        "        \"properties\": {\n" +
-                        "          \"engine_minutes\": 0,\n" +
-                        "          \"maintenance_time\": 0\n" +
-                        "        }\n" +
-                        "      }\n" +
-                        "    }\n" +
-                        "  }\n" +
-                        "}").asObject());
+                JsonFactory.readFrom("{\n"
+                        + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/create\",\n"
+                        + "  \"headers\": {\n"
+                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                        + "  },\n"
+                        + "  \"path\": \"/\",\n"
+                        + "  \"value\": {\n"
+                        + "    \"thingId\": \"org.eclipse.ditto:car-01\",\n"
+                        + "    \"attributes\": {\n"
+                        + "      \"manufacture\": {\n"
+                        + "        \"place\": \"Rome\",\n"
+                        + "        \"date\": \"01-01-2021\"\n"
+                        + "      }\n"
+                        + "    },\n"
+                        + "    \"features\": {\n"
+                        + "      \"parts_time\": {\n"
+                        + "        \"properties\": {\n"
+                        + "          \"engine\": 0\n"
+                        + "        }\n"
+                        + "      },\n"
+                        + "      \"parts_maintenance\": {\n"
+                        + "        \"properties\": {\n"
+                        + "          \"engine\": 0\n"
+                        + "        }\n"
+                        + "      }\n"
+                        + "    }\n"
+                        + "  }\n"
+                        + "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
             if (a != null) {
                 //System.out.println(a);
@@ -226,19 +213,20 @@ public class CarsClient {
     	
     	JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
-                		+ "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/retrieve\",\n"
-                		+ "  \"headers\": {\n"
-                		+ "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                		+ "  },\n"
-                		+ "  \"path\": \"/\"\n"
-                		+ "}").asObject());
+                        + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/retrieve\",\n"
+                        + "  \"headers\": {\n"
+                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                        + "  },\n"
+                        + "  \"path\": \"/\"\n"
+                        + "}\n"
+                        + "").asObject());
     	HttpStatus p = null;
     	
         try {
             Adaptable adapt = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().get();
             p = adapt.getPayload().getHttpStatus().get();
-            if(p.getCode() != 404) {
-            	//System.out.println(adapt.getPayload().getValue().get());
+            if(p.getCode() == 404) {
+            	System.out.println(adapt.getPayload().getValue().get());
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -250,18 +238,25 @@ public class CarsClient {
     
     //Resetta le caratteristiche del Twin Car ad inizio simulazione
     private void resetThing() {
+        System.out.println("resetting");
     	JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
                 		+ "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n"
                 		+ "  \"headers\": {\n"
                 		+ "    \"correlation-id\": \"<command-correlation-id>\"\n"
                 		+ "  },\n"
-                		+ "  \"path\": \"/features/status\",\n"
+                		+ "  \"path\": \"/features\",\n"
                 		+ "  \"value\": {\n"
-                		+ "    \"properties\": {\n"
-                		+ "      \"engine_minutes\": 0,\n"
-                		+ "      \"maintenance_time\": 0\n"
-                		+ "    }\n"
+                		+ "   \"parts_time\": {\n"
+                		+ "        \"properties\": {\n"
+                		+ "          \"engine\": 0\n"
+                		+ "        }\n"
+                		+ "      },\n"
+                		+ "      \"parts_maintenance\": {\n"
+                		+ "        \"properties\": {\n"
+                		+ "          \"engine\": 0\n"
+                		+ "        }\n"
+                		+ "      }"
                 		+ "  }\n"
                 		+ " }\n"
                 		).asObject());

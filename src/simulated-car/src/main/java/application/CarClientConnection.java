@@ -119,13 +119,14 @@ public class CarClientConnection {
 
     //Shadowing Tempo Motore
     public void updateCarEngine(final int counter) {
+        System.out.println(counter);
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
                         + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n"
                         + "  \"headers\": {\n"
                         + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                         + "  },\n"
-                        + "  \"path\": \"/features/status/properties/engine_minutes\",\n"
+                        + "  \"path\": \"/features/parts_time/properties/engine\",\n"
                         + "  \"value\": " + counter + "\n"
                         + "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
