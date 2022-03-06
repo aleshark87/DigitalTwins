@@ -9,7 +9,6 @@ import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DittoClient;
 import org.eclipse.ditto.client.DittoClients;
 import org.eclipse.ditto.client.changes.ChangeAction;
-import org.eclipse.ditto.client.changes.ThingChange;
 import org.eclipse.ditto.client.configuration.BasicAuthenticationConfiguration;
 import org.eclipse.ditto.client.configuration.MessagingConfiguration;
 import org.eclipse.ditto.client.configuration.WebSocketMessagingConfiguration;
@@ -73,7 +72,6 @@ public class CarsClient {
         }
         
         subscribeForNotification();
-        //inizializzazioneCanaleLive?
         supervisor = new MaintenanceSupervisor(this);
     }
     
@@ -84,7 +82,8 @@ public class CarsClient {
                                  .search()
                                  .stream(queryBuilder -> queryBuilder.namespace("org.eclipse.ditto"))
                                  .collect(Collectors.toList());
-        return list.get(0).getFeatures().get().getFeature("parts_time").get().getProperties().get().toString();
+        return list.get(0).getFeatures().get().getFeature("parts_time").get().getProperties().get().toString() + " " +
+                list.get(0).getFeatures().get().getFeature("parts_maintenance").get().getProperties().get().toString();
     }
     
     private void subscribeForNotification() {
@@ -93,10 +92,6 @@ public class CarsClient {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("Subscribed for Twin events");
-        
-        /*client.twin().registerForFeaturePropertyChanges(registrationId, featureId, handler);*/
-        /* L'idea è di creare una feature per tutte le parti della macchina ed una feature per tutte le manutenzioni alle parti */
         client.twin().registerForThingChanges("car-changes", change -> {
            if (change.getAction() == ChangeAction.UPDATED) {
                //Solo per stampare meglio il testo
@@ -104,20 +99,17 @@ public class CarsClient {
                if(text.v1()) {
                    System.out.println(text.v2().get());
                }
-               // NOTIFICHE PROVENIENTE DALLO SHADOWING DELLA CAR
-               //Quando ricevo una notifica che cambia il tempo del motore, controllo se è necessario eseguire manutenzione
-               /*
-        	   if(!supervisor.getMaintenanceStatus() && getChangedPropertiesName(change).equals("engine_minutes")) {
-        		   int engineMinutes = getFeatureProperties(change.getThing().get(), "status", "engine_minutes");
-                   supervisor.checkForMaintenance(engineMinutes);
-        	   }
-        	   else {
-        	       //Quando ricevo una notifica che cambia il tempo della manutenzione, controllo se è terminata
-        		   int maintenanceTime = getFeatureProperties(change.getThing().get(), "status", "maintenance_time");
-        		   supervisor.checkForEndMaintenance(maintenanceTime);
-        	   }
-        	   */
            }
+        });
+        client.twin().registerForFeaturePropertyChanges("parts-changes", "parts_time", change -> {
+            if(change.getPath().getRoot().get().toString().equals("engine")) {
+                supervisor.checkForMaintenance(change.getValue().get().asInt());
+            }
+        });
+        client.twin().registerForFeaturePropertyChanges("maintenance-changes", "parts_maintenance", change -> {
+            if(change.getPath().getRoot().get().toString().equals("engine")) {
+                supervisor.checkForEndMaintenance(change.getValue().get().asInt());
+            }
         });
     }
     
@@ -139,10 +131,6 @@ public class CarsClient {
         }
     }
     
-    private String getChangedPropertiesName(ThingChange change) {
-    	return change.getThing().get().getFeatures().get().getFeature("status").get().getProperties().get().getKeys().get(0).toString();
-    }
-    
     //Segnala al Thing Car che è necessario eseguire manutenzione, oppure che è finita
     void updateMaintenance(boolean value) {
         ThingId thingId = ThingId.of("org.eclipse.ditto", "car-01");
@@ -159,10 +147,6 @@ public class CarsClient {
                                .payload(payloadString)
                                .contentType("text/plain")
                                .send();
-    }
-    
-    private int getFeatureProperties(final Thing thing, final String featureId, final String propertyId) {
-        return thing.getFeatures().get().getFeature(featureId).get().getProperties().get().getValue(propertyId).get().asInt();
     }
     
     //Crea il Thing Car

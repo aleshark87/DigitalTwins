@@ -1,12 +1,9 @@
 package application;
 
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DittoClient;
 import org.eclipse.ditto.client.DittoClients;
-import org.eclipse.ditto.client.changes.ThingChange;
 import org.eclipse.ditto.client.configuration.BasicAuthenticationConfiguration;
 import org.eclipse.ditto.client.configuration.MessagingConfiguration;
 import org.eclipse.ditto.client.configuration.WebSocketMessagingConfiguration;
@@ -56,46 +53,31 @@ public class CarClientConnection {
                 .connect()
                 .toCompletableFuture()
                 .join();
-        try {
-            client.live().startConsumption().toCompletableFuture().get();
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
         subscribeForMessages();
     }
     
     private void subscribeForMessages() {
+        try {
+            client.live().startConsumption().toCompletableFuture().get();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         ThingId thingId = ThingId.of("org.eclipse.ditto", "car-01");
-        final LiveThingHandle thingId2 = client.live().forId(thingId);
+        final LiveThingHandle thingIdLive = client.live().forId(thingId);
         // Register for *all* messages of a *specific* thing and provide payload as String
-        thingId2.registerForMessage("MsgRegistration", "*", String.class, message -> {
-            final String subject = message.getSubject();
+        thingIdLive.registerForMessage("msg_maintenance", "supervisor.maintenance", String.class, message -> {
             final Optional<String> payload = message.getPayload();
-            System.out.println(payload.get());
-        });
-    }
-    
-    private void subscribeForNotification() {
-        /*
-        client.twin().registerForThingChanges("my-changes", change -> {
-                System.out.println(getMaintenanceStatus(change));
-                //Esegue la manutenzione fermandosi quando lo notifica
-                if(getMaintenanceStatus(change) == true) {
-                    controller.getCarSimulation().maintenance();
-                }
-                //Se viene notificata la fine della manutenzione, Thing Car riparte
-                if(getMaintenanceStatus(change) == false) {
+            if(payload.get().equals("DoMaintenance")) {
+                controller.getCarSimulation().maintenance();
+            }
+            else {
+                if(payload.get().equals("DoneMaintenance")) {
                     controller.getCarSimulation().maintenanceDone();
                     controller.getCarSimulation().startCar();
                 }
+            }
         });
-        */
     }
-    
     //Shadowing tempo di manutenzione
     public void updateMaintenanceTime(int time) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
@@ -104,7 +86,7 @@ public class CarClientConnection {
                         + "  \"headers\": {\n"
                         + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                         + "  },\n"
-                        + "  \"path\": \"/features/status/properties/maintenance_time\",\n"
+                        + "  \"path\": \"/features/parts_maintenance/properties/engine\",\n"
                         + "  \"value\": " + time + "\n"
                         + "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
@@ -119,7 +101,6 @@ public class CarClientConnection {
 
     //Shadowing Tempo Motore
     public void updateCarEngine(final int counter) {
-        System.out.println(counter);
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
                         + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n"

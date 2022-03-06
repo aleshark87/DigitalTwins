@@ -1,0 +1,28 @@
+{
+  "topic": "org.eclipse.ditto/car-01/things/twin/commands/create",
+  "headers": {
+    "correlation-id": "<command-correlation-id>"
+  },
+  "path": "/",
+  "value": {
+    "thingId": "org.eclipse.ditto:car-01",
+    "attributes": {
+      "manufacture": {
+        "place": "Rome",
+        "date": "01-01-2021"
+      }
+    },
+    "features": {
+      "parts_time": {
+        "properties": {
+          "engine": 0
+        }
+      },
+      "parts_maintenance": {
+        "properties": {
+          "engine": 0
+        }
+      }
+    }
+  }
+}
