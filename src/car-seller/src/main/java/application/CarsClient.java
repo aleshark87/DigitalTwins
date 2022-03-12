@@ -37,6 +37,7 @@ public class CarsClient {
     private MessagingProvider messagingProvider;
     private DittoClient client;
     private MaintenanceSupervisor supervisor;
+    private ThingId thingId = ThingId.of("org.eclipse.ditto", "car-01");
     private String tmpRepetition = "first";
     
     private void createAuthProvider() {
@@ -101,6 +102,7 @@ public class CarsClient {
                }
            }
         });
+        //Registrazione agli eventi generati dai modify-command 
         client.twin().registerForFeaturePropertyChanges("parts-changes", "parts_time", change -> {
             if(change.getPath().getRoot().get().toString().equals("engine")) {
                 supervisor.checkForMaintenance(change.getValue().get().asInt());
@@ -133,7 +135,6 @@ public class CarsClient {
     
     //Segnala al Thing Car che è necessario eseguire manutenzione, oppure che è finita
     void updateMaintenance(boolean value) {
-        ThingId thingId = ThingId.of("org.eclipse.ditto", "car-01");
         String payloadString = "";
         if(value) {
             payloadString = "DoMaintenance";
@@ -150,7 +151,6 @@ public class CarsClient {
     }
     
     //Crea il Thing Car
-    //Andrebbe fatta nella simulazione
     private void createCarThing() {
         System.out.println("Creating Twin \"org.eclipse.ditto:car-01\"");
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
