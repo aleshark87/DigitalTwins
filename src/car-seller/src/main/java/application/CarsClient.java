@@ -27,6 +27,8 @@ import com.andrebreves.tuple.Tuple;
 import com.andrebreves.tuple.Tuple2;
 import com.neovisionaries.ws.client.WebSocket;
 
+import car_model.CarFeatures;
+
 public class CarsClient {
     
     public static void main(String[] args) {
@@ -37,7 +39,7 @@ public class CarsClient {
     private MessagingProvider messagingProvider;
     private DittoClient client;
     private MaintenanceSupervisor supervisor;
-    private ThingId thingId = ThingId.of("org.eclipse.ditto", "car-01");
+    private ThingId thingId = ThingId.of("org.eclipse.ditto", "car");
     private String tmpRepetition = "first";
     
     private void createAuthProvider() {
@@ -83,8 +85,8 @@ public class CarsClient {
                                  .search()
                                  .stream(queryBuilder -> queryBuilder.namespace("org.eclipse.ditto"))
                                  .collect(Collectors.toList());
-        return list.get(0).getFeatures().get().getFeature("parts_time").get().getProperties().get().toString() + " " +
-                list.get(0).getFeatures().get().getFeature("parts_maintenance").get().getProperties().get().toString();
+        return list.get(0).getFeatures().get().getFeature(CarFeatures.PARTS_TIME.get()).get().getProperties().get().toString() + " " +
+                list.get(0).getFeatures().get().getFeature(CarFeatures.PARTS_MAINTENANCE.get()).get().getProperties().get().toString();
     }
     
     private void subscribeForNotification() {
@@ -103,12 +105,12 @@ public class CarsClient {
            }
         });
         //Registrazione agli eventi generati dai modify-command 
-        client.twin().registerForFeaturePropertyChanges("parts-changes", "parts_time", change -> {
+        client.twin().registerForFeaturePropertyChanges("parts-changes", CarFeatures.PARTS_TIME.get(), change -> {
             if(change.getPath().getRoot().get().toString().equals("engine")) {
                 supervisor.checkForMaintenance(change.getValue().get().asInt());
             }
         });
-        client.twin().registerForFeaturePropertyChanges("maintenance-changes", "parts_maintenance", change -> {
+        client.twin().registerForFeaturePropertyChanges("maintenance-changes", CarFeatures.PARTS_MAINTENANCE.get(), change -> {
             if(change.getPath().getRoot().get().toString().equals("engine")) {
                 supervisor.checkForEndMaintenance(change.getValue().get().asInt());
             }
@@ -155,13 +157,13 @@ public class CarsClient {
         System.out.println("Creating Twin \"org.eclipse.ditto:car-01\"");
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/create\",\n"
+                        + "  \"topic\": \"org.eclipse.ditto/car/things/twin/commands/create\",\n"
                         + "  \"headers\": {\n"
                         + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                         + "  },\n"
                         + "  \"path\": \"/\",\n"
                         + "  \"value\": {\n"
-                        + "    \"thingId\": \"org.eclipse.ditto:car-01\",\n"
+                        + "    \"thingId\": \"org.eclipse.ditto:car\",\n"
                         + "    \"attributes\": {\n"
                         + "      \"manufacture\": {\n"
                         + "        \"place\": \"Rome\",\n"
@@ -197,7 +199,7 @@ public class CarsClient {
     	
     	JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/retrieve\",\n"
+                        + "  \"topic\": \"org.eclipse.ditto/car/things/twin/commands/retrieve\",\n"
                         + "  \"headers\": {\n"
                         + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                         + "  },\n"
@@ -225,7 +227,7 @@ public class CarsClient {
         System.out.println("resetting");
     	JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
-                		+ "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n"
+                		+ "  \"topic\": \"org.eclipse.ditto/car/things/twin/commands/modify\",\n"
                 		+ "  \"headers\": {\n"
                 		+ "    \"correlation-id\": \"<command-correlation-id>\"\n"
                 		+ "  },\n"

@@ -62,7 +62,7 @@ public class CarClientConnection {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        ThingId thingId = ThingId.of("org.eclipse.ditto", "car-01");
+        ThingId thingId = ThingId.of("org.eclipse.ditto", "car");
         final LiveThingHandle thingIdLive = client.live().forId(thingId);
         // Register for *all* messages of a *specific* thing and provide payload as String
         thingIdLive.registerForMessage("msg_maintenance", "supervisor.maintenance", String.class, message -> {
@@ -82,7 +82,7 @@ public class CarClientConnection {
     public void updateMaintenanceTime(int time) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n"
+                        + "  \"topic\": \"org.eclipse.ditto/car/things/twin/commands/modify\",\n"
                         + "  \"headers\": {\n"
                         + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                         + "  },\n"
@@ -103,7 +103,7 @@ public class CarClientConnection {
     public void updateCarEngine(final int counter) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"org.eclipse.ditto/car-01/things/twin/commands/modify\",\n"
+                        + "  \"topic\": \"org.eclipse.ditto/car/things/twin/commands/modify\",\n"
                         + "  \"headers\": {\n"
                         + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                         + "  },\n"
