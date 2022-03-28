@@ -1,11 +1,11 @@
 {
-  "topic": "org.eclipse.ditto/car-01/things/twin/commands/create",
+  "topic": "org.eclipse.ditto/car/things/twin/commands/create",
   "headers": {
     "correlation-id": "<command-correlation-id>"
   },
   "path": "/",
   "value": {
-    "thingId": "org.eclipse.ditto:car-01",
+    "thingId": "org.eclipse.ditto:car",
     "attributes": {
       "manufacture": {
         "place": "Rome",
