@@ -154,7 +154,7 @@ public class CarsClient {
     
     //Crea il Thing Car
     private void createCarThing() {
-        System.out.println("Creating Twin \"org.eclipse.ditto:car-01\"");
+        System.out.println("Creating Twin \"org.eclipse.ditto:car\"");
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
                         + "  \"topic\": \"org.eclipse.ditto/car/things/twin/commands/create\",\n"
