@@ -9,9 +9,12 @@ public class RunCarSimulation {
     private CarClientConnection connection;
     
     public RunCarSimulation() {
-        //carSimulation = new SimCar(this);
         connection = new CarClientConnection(this);
-        //carSimulation.startEngine();;
+        if(connection.isTwinOnline()) {
+          //carSimulation = new SimCar(this);
+          //carSimulation.startEngine();
+        }
+
     }
     
     public CarClientConnection getClientConnection() {

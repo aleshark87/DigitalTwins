@@ -47,6 +47,7 @@ public class CarsClient {
         new CarsClient();
     }
     
+    private CarHttpRequests httpRequests;
     private AuthenticationProvider<WebSocket> authenticationProvider;
     private MessagingProvider messagingProvider;
     private DittoClient client;
@@ -72,13 +73,8 @@ public class CarsClient {
     }
     
     public CarsClient() {
-        createAuthProvider();
-        createMessageProvider();
-        client = DittoClients.newInstance(messagingProvider)
-                .connect()
-                .toCompletableFuture()
-                .join();
-        
+        createDittoClient();
+        httpRequests = new CarHttpRequests();
         if(checkIfThingExists().getCode() == 404) {
         	createCarThing();
         }
@@ -89,6 +85,15 @@ public class CarsClient {
         subscribeForNotification();
         supervisor = new MaintenanceSupervisor(this);
         
+    }
+    
+    private void createDittoClient() {
+        createAuthProvider();
+        createMessageProvider();
+        client = DittoClients.newInstance(messagingProvider)
+                .connect()
+                .toCompletableFuture()
+                .join();
     }
     
     
@@ -168,44 +173,13 @@ public class CarsClient {
     //Crea il Thing Car
     private void createCarThing() {
         System.out.println("Creating Twin \"io.eclipseprojects.ditto:car\"");
-        int returnCode = makeHttpRequest();
+        int returnCode = httpRequests.createThing();
         if(returnCode == 201) {
             System.out.println("Twin io.eclipse.projects.ditto:car was created succesfully!");
         }
         else {
             System.out.println("Something happened in the creation of the twin.");
         }
-    }
-    
-    private int makeHttpRequest() {
-        String usernameColonPassword = "ditto:ditto";
-        String basicAuthPayload = "Basic " + Base64.getEncoder().encodeToString(usernameColonPassword.getBytes());
-        String data_raw = "{\n"
-                + "    \"definition\": \"https://raw.githubusercontent.com/aleshark87/WoTModels/main/car.jsonld\"\n"
-                + "}";
-        int returnCode = -1;
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI("http://localhost:8080/api/2/things/io.eclipseprojects.ditto:car"))
-                    .headers("Content-Type", "application/json")
-                    .headers("Authorization", basicAuthPayload)
-                    .PUT(HttpRequest.BodyPublishers.ofString(data_raw))
-                    .build();
-            HttpClient client = HttpClient.newBuilder().build();
-            HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-            System.out.println(response);
-            returnCode = response.statusCode();
-        } catch (URISyntaxException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return returnCode;
     }
     
     //Controlla se il Twin Car è già stato creato

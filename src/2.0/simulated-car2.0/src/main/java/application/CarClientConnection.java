@@ -1,6 +1,9 @@
 package application;
 
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+
+import org.eclipse.ditto.base.model.common.HttpStatus;
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DittoClient;
 import org.eclipse.ditto.client.DittoClients;
@@ -13,6 +16,7 @@ import org.eclipse.ditto.client.messaging.AuthenticationProviders;
 import org.eclipse.ditto.client.messaging.MessagingProvider;
 import org.eclipse.ditto.client.messaging.MessagingProviders;
 import org.eclipse.ditto.json.JsonFactory;
+import org.eclipse.ditto.protocol.Adaptable;
 import org.eclipse.ditto.protocol.JsonifiableAdaptable;
 import org.eclipse.ditto.protocol.ProtocolFactory;
 import org.eclipse.ditto.things.model.ThingId;
@@ -27,6 +31,8 @@ public class CarClientConnection {
     private AuthenticationProvider<WebSocket> authenticationProvider;
     private MessagingProvider messagingProvider;
     private DittoClient client;
+    private CarHttpRequests httpRequests;
+    private boolean twinOnline = false;
     
     private void createAuthProvider() {
         authenticationProvider = AuthenticationProviders.basic((
@@ -47,13 +53,57 @@ public class CarClientConnection {
     
     public CarClientConnection(RunCarSimulation controller) {
         this.controller = controller;
+        httpRequests = new CarHttpRequests();
+        createDittoClient();
+        if(checkIfThingExists().getCode() == 404) {
+            System.out.println("Car simulation can't start without its twin online.");
+        }
+        else {
+            twinOnline = true;
+            httpRequests.getFeatureEndpoints();
+            //subscribeForMessages();
+        }
+        
+    }
+    
+    public boolean isTwinOnline() {
+        return this.twinOnline;
+    }
+    
+    private void createDittoClient() {
         createAuthProvider();
         createMessageProvider();
         client = DittoClients.newInstance(messagingProvider)
                 .connect()
                 .toCompletableFuture()
                 .join();
-        subscribeForMessages();
+    }
+    
+private HttpStatus checkIfThingExists() {
+        
+        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+                JsonFactory.readFrom("{\n"
+                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
+                        + "  \"headers\": {\n"
+                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                        + "  },\n"
+                        + "  \"path\": \"/\"\n"
+                        + "}\n"
+                        + "").asObject());
+        HttpStatus p = null;
+        
+        try {
+            Adaptable adapt = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().get();
+            p = adapt.getPayload().getHttpStatus().get();
+            if(p.getCode() == 404) {
+                System.out.println(adapt.getPayload().getValue().get());
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        return p;
     }
     
     private void subscribeForMessages() {
