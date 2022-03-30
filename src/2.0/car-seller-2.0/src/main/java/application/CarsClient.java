@@ -53,7 +53,6 @@ public class CarsClient {
     private DittoClient client;
     private MaintenanceSupervisor supervisor;
     private ThingId thingId = ThingId.of("io.eclipseprojects.ditto", "car");
-    private String tmpRepetition = "first";
     
     private void createAuthProvider() {
         authenticationProvider = AuthenticationProviders.basic((
@@ -81,7 +80,7 @@ public class CarsClient {
         else {
         	resetThing();
         }
-        
+        printThingFeatures();
         subscribeForNotification();
         supervisor = new MaintenanceSupervisor(this);
         
@@ -103,8 +102,8 @@ public class CarsClient {
                                  .search()
                                  .stream(queryBuilder -> queryBuilder.namespace("io.eclipseprojects.ditto"))
                                  .collect(Collectors.toList());
-        return list.get(0).getFeatures().get().getFeature(CarFeatures.PARTS_TIME.get()).get().getProperties().get().toString() + " " +
-                list.get(0).getFeatures().get().getFeature(CarFeatures.PARTS_MAINTENANCE.get()).get().getProperties().get().toString();
+        System.out.println(list);
+        return list.get(0).getFeatures().get().toJsonString();
     }
     
     private void subscribeForNotification() {
@@ -115,11 +114,7 @@ public class CarsClient {
         }
         client.twin().registerForThingChanges("car-changes", change -> {
            if (change.getAction() == ChangeAction.UPDATED) {
-               //Solo per stampare meglio il testo
-               var text = isNotARepetition(printThingFeatures());
-               if(text.v1()) {
-                   System.out.println(text.v2().get());
-               }
+               
            }
         });
         //Registrazione agli eventi generati dai modify-command 
@@ -133,24 +128,6 @@ public class CarsClient {
                 supervisor.checkForEndMaintenance(change.getValue().get().asInt());
             }
         });
-    }
-    
-    private Tuple2<Boolean, Optional<String>> isNotARepetition(String text) {
-        //Is not a repetition
-        if(tmpRepetition.equals("first")) {
-            tmpRepetition = text;
-            return Tuple.of(true, Optional.of(text));
-        }
-        else {
-            //this is a repetition
-            if(tmpRepetition.equals(text)) {
-                return Tuple.of(false, Optional.empty());
-            }
-            else {
-                tmpRepetition = text;
-                return Tuple.of(true, Optional.of(text));
-            }
-        }
     }
     
     //Segnala al Thing Car che è necessario eseguire manutenzione, oppure che è finita
@@ -200,7 +177,7 @@ public class CarsClient {
             Adaptable adapt = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().get();
             p = adapt.getPayload().getHttpStatus().get();
             if(p.getCode() == 404) {
-            	System.out.println(adapt.getPayload().getValue().get());
+            	//System.out.println(adapt.getPayload().getValue().get());
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -212,7 +189,43 @@ public class CarsClient {
     
     //Resetta le caratteristiche del Twin Car ad inizio simulazione
     private void resetThing() {
-    //TODO
+        System.out.println("resetting");
+        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+                JsonFactory.readFrom("{\n"
+                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
+                        + "  \"headers\": {\n"
+                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                        + "  },\n"
+                        + "  \"path\": \"/features\",\n"
+                        + "  \"value\": {\n"
+                        + "    \"status\": {\n"
+                        + "      \"properties\": {\n"
+                        + "        \"engine\": false,\n"
+                        + "        \"charge-level\": 100.0\n"
+                        + "      }\n"
+                        + "    },\n"
+                        + "    \"indicator-light\": {\n"
+                        + "      \"properties\": {\n"
+                        + "        \"battery-indicator\": false,\n"
+                        + "        \"engine-indicator\": false\n"
+                        + "      }\n"
+                        + "    },\n"
+                        + "    \"wear-time\": {\n"
+                        + "      \"properties\": {\n"
+                        + "        \"battery-wear\": 0,\n"
+                        + "        \"engine-wear\": 0\n"
+                        + "      }\n"
+                        + "    }\n"
+                        + "  }\n"
+                        + "}").asObject());
+        client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
+            if (a != null) {
+                //System.out.println(a);
+            }
+            if (t != null) {
+                //System.out.println("sendDittoProtocol: Received throwable as response" + t);
+            }
+        });
     }
 
 }

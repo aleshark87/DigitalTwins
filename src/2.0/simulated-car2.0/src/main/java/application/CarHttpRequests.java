@@ -8,7 +8,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Base64;
+import java.util.LinkedList;
 import java.util.List;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class CarHttpRequests {
 
@@ -49,11 +53,20 @@ public class CarHttpRequests {
     }
     
     public List<String> getFeatureEndpoints(){
+        List<JSONObject> jsonObjList = getFeaturesJson();
+        System.out.println(jsonObjList.get(0));
+        //JSONObject j = (jsonObjList.get(0).getJSONObject("properties").getJSONObject("engine").getJSONArray("forms").getJSONObject(3).getString("href"));
+        //System.out.println(j.getString("href"));
+        return null;
+    }
+    
+    private List<JSONObject> getFeaturesJson() {
         String baseURI = "http://localhost:8080/api/2/things/io.eclipseprojects.ditto:car/features/";
         List<String> featureURIs = List.of(
                 baseURI + "status",
                 baseURI + "indicator-light",
                 baseURI + "wear-time");
+        List<JSONObject> jsonObjList = new LinkedList<>();
         try {
             for(String featureURI: featureURIs) {
                 HttpRequest req = HttpRequest.newBuilder()
@@ -63,12 +76,14 @@ public class CarHttpRequests {
                         .GET()
                         .build();
                 HttpResponse<String> response = client.send(req, BodyHandlers.ofString());
-                System.out.println(response.body());
+                JSONObject jsonObj = new JSONObject(response.body());
+                jsonObjList.add(jsonObj);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return List.of("cacca");
+        
+        return jsonObjList;
     }
     
 }

@@ -60,7 +60,7 @@ public class CarClientConnection {
         }
         else {
             twinOnline = true;
-            httpRequests.getFeatureEndpoints();
+            //httpRequests.getFeatureEndpoints();
             //subscribeForMessages();
         }
         
