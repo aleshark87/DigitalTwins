@@ -9,5 +9,5 @@ java.home=/home/aless/.sdkman/candidates/java/17.0.2-tem
 jvm.arguments=
 offline.mode=false
 override.workspace.settings=true
-show.console.view=true
-show.executions.view=true
+show.console.view=false
+show.executions.view=false
