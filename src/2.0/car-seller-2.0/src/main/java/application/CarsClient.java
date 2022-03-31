@@ -81,8 +81,8 @@ public class CarsClient {
         	resetThing();
         }
         printThingFeatures();
-        subscribeForNotification();
-        supervisor = new MaintenanceSupervisor(this);
+        //subscribeForNotification();
+        //supervisor = new MaintenanceSupervisor(this);
         
     }
     

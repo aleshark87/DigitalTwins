@@ -1,5 +1,7 @@
-package controllers;
+package guicontrollers;
 
+import controllers.CarSimController;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 
@@ -12,10 +14,11 @@ public final class UIController {
     
     @FXML
     private TextArea textArea;
+    private CarSimController controller = new CarSimController(this);
     
     @FXML
     private void initialize() {
-        textArea.setStyle("-fx-text-alignment: center;");
+        
     }
     
     @FXML
@@ -26,6 +29,17 @@ public final class UIController {
     @FXML
     public void stopBtnClicked() {
         textArea.setText("stop btn clicked");
+    }
+    
+    public void updateTextArea(String text) {
+        Platform.runLater(new Runnable() {
+
+            @Override
+            public void run() {
+                textArea.setText(text);
+            }
+            
+        });
     }
     
     
