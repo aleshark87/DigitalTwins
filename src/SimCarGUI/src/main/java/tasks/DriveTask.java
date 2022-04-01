@@ -24,8 +24,9 @@ public class DriveTask implements Runnable{
     @Override
     public void run() {
         if(stop) {
-            System.out.println("update charge-level");
             simulationCar.getController().getClientConnection().updateCarChargeLevel(0.5);
+            
+            simulationCar.getController().getClientConnection().updateWearLevel(5, "engine-wear");
         }
     }
     

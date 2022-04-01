@@ -2,6 +2,7 @@ package application;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -74,19 +75,6 @@ public class CarClientConnection {
         if(connectionStatus) {
             if(retrieveThing().getCode() == 200) {
                 twinStatus = true;
-                /*
-                SimCar.exec.scheduleAtFixedRate(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        String allFeatureProperties = getThingFeatures().getFeature("status").get().getProperties().get().toString() + "\n"+ 
-                                getThingFeatures().getFeature("indicator-light").get().getProperties().get().toString() + "\n"+
-                                getThingFeatures().getFeature("wear-time").get().getProperties().get().toString();
-                        controller.getView().updateTextArea(allFeatureProperties);
-                    }
-                    
-                }, 0, 3,TimeUnit.SECONDS);
-                */
             }
         }
         //subscribeForMessages();
@@ -116,10 +104,10 @@ public class CarClientConnection {
         });
     }
     */
-
+    
     //Shadowing Status Engine
     public void updateCarEngine(final boolean state) {
-        System.out.println("state " + state);
+        //System.out.println("state " + state);
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
                         + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
@@ -129,23 +117,7 @@ public class CarClientConnection {
                         + "  \"path\": \"/features/status/properties/engine\",\n"
                         + "  \"value\": " + state + "\n"
                         + "}").asObject());
-        client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
-            if (a != null) {
-                System.out.println(a);
-                System.out.println(getThingFeatures()); 
-            }
-            if (t != null) {
-                System.out.println("sendDittoProtocol: Received throwable as response" + t);
-            }
-        });
-    }
-    
-    private Features getThingFeatures() {
-        List<Thing> list = client.twin()
-                                 .search()
-                                 .stream(queryBuilder -> queryBuilder.namespace("io.eclipseprojects.ditto"))
-                                 .collect(Collectors.toList());
-        return list.get(0).getFeatures().get();
+        client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
     }
     
     //Shadowing Status Charge-Level
@@ -161,18 +133,12 @@ public class CarClientConnection {
                             + "  \"path\": \"/features/status/properties/charge-level\",\n"
                             + "  \"value\": " + (charge_level - decrease) + "\n"
                             + "}").asObject());
-            client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
-                if (a != null) {
-                    //System.out.println(a);
-                }
-                if (t != null) {
-                    System.out.println("sendDittoProtocol: Received throwable as response" + t);
-                }
-            });
+            client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
         }
         else {
             System.out.println("Had problems retrieving the charge_level");
         }
+        
     }
     
     /*
@@ -187,21 +153,34 @@ public class CarClientConnection {
                             + "  \"headers\": {\n"
                             + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                             + "  },\n"
-                            + "  \"path\": \"/features/wear-time/properties/" + part + "\",\n"
-                            + "  \"value\": " + (wear_level + increase) + "/\n"
+                            + "  \"path\": \"/features/wear-time/properties/"+part+"\",\n"
+                            + "  \"value\": " + (wear_level + increase) + "\n"
                             + "}").asObject());
-            client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
-                if (a != null) {
-                    System.out.println(a);
-                }
-                if (t != null) {
-                    System.out.println("sendDittoProtocol: Received throwable as response" + t);
-                }
-            });
+            client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
         }
         else {
-            System.out.println("Had problems retrieving the wear_level");
+            //System.out.println("Had problems retrieving the wear_level");
         }
+    }
+    
+    /*
+     * Retrieves the wear of the given part.
+     */
+    private int retrieveWearLevel(String part) {
+        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+                JsonFactory.readFrom("{\n"
+                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
+                        + "  \"headers\": {\n"
+                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                        + "  },\n"
+                        + "  \"path\": \"/features/wear-time/properties/"+part+"\"\n"
+                        + "}\n").asObject());
+        int wear_level = -1;
+        CompletableFuture<Adaptable> complFuture = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture();
+        var adapt = complFuture.join();
+        wear_level = adapt.getPayload().getValue().get().asInt();
+        
+        return wear_level;
     }
     
     //Retrieve Last ChargeLevel value
@@ -216,8 +195,10 @@ public class CarClientConnection {
                         + "}\n").asObject());
         double charge_level = -1.0;
         try {
-            Adaptable adapt = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().get();
+            CompletableFuture<Adaptable> complFuture = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture();
+            var adapt = complFuture.join();
             charge_level = adapt.getPayload().getValue().get().asDouble();
+            //System.out.println(charge_level);
         } catch (Exception e) {
             System.out.println("Failed to retrieve chargelevel");
             charge_level = -1.0;
@@ -225,29 +206,7 @@ public class CarClientConnection {
         return charge_level;
     }
     
-    /*
-     * Retrieves the wear of the given part.
-     */
-    private int retrieveWearLevel(String part) {
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
-                        + "  \"headers\": {\n"
-                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                        + "  },\n"
-                        + "  \"path\": \"/features/wear-time/properties/" + part + "\\n"
-                        + "}\n").asObject());
-        int wear_level = -1;
-        try {
-            Adaptable adapt = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().get();
-            System.out.println(adapt);
-            wear_level = adapt.getPayload().getValue().get().asInt();
-        } catch (Exception e) {
-            System.out.println("Failed to retrieve chargelevel");
-            wear_level = -1;
-        }
-        return wear_level;
-    }
+    
     
     
     //Controlla se il Twin Car è già stato creato
@@ -265,16 +224,14 @@ public class CarClientConnection {
         HttpStatus p = null;
         
         try {
-            Adaptable adapt = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().get();
+            Adaptable adapt = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
             p = adapt.getPayload().getHttpStatus().get();
             if(p.getCode() == 404) {
                 //
             }
             System.out.println(adapt.getPayload().getValue().get());
             //System.out.println(p.getCode());
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return p;
