@@ -74,7 +74,7 @@ public class CarClientConnection {
         if(connectionStatus) {
             if(retrieveThing().getCode() == 200) {
                 twinStatus = true;
-                Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(new Runnable() {
+                SimCar.exec.scheduleAtFixedRate(new Runnable() {
 
                     @Override
                     public void run() {
@@ -115,7 +115,7 @@ public class CarClientConnection {
     }
     */
 
-    //Shadowing Status Motore
+    //Shadowing Status Engine
     public void updateCarEngine(final boolean state) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
@@ -136,7 +136,109 @@ public class CarClientConnection {
         });
     }
     
-  //Controlla se il Twin Car è già stato creato
+    //Shadowing Status Charge-Level
+    public void updateCarChargeLevel(final double decrease) {
+        double charge_level = retrieveCarChargeLevel();
+        if(charge_level != -1.0) {
+            JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+                    JsonFactory.readFrom("{\n"
+                            + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
+                            + "  \"headers\": {\n"
+                            + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                            + "  },\n"
+                            + "  \"path\": \"/features/status/properties/charge-level\",\n"
+                            + "  \"value\": " + (charge_level - decrease) + "\n"
+                            + "}").asObject());
+            client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
+                if (a != null) {
+                    //System.out.println(a);
+                }
+                if (t != null) {
+                    System.out.println("sendDittoProtocol: Received throwable as response" + t);
+                }
+            });
+        }
+        else {
+            System.out.println("Had problems retrieving the charge_level");
+        }
+    }
+    
+    /*
+     * Shadowing Wear Levels
+     */
+    public void updateWearLevel(final int increase, final String part) {
+        int wear_level = retrieveWearLevel(part);
+        if(wear_level != -1) {
+            JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+                    JsonFactory.readFrom("{\n"
+                            + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
+                            + "  \"headers\": {\n"
+                            + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                            + "  },\n"
+                            + "  \"path\": \"/features/wear-time/properties/" + part + "\",\n"
+                            + "  \"value\": " + (wear_level + increase) + "/\n"
+                            + "}").asObject());
+            client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
+                if (a != null) {
+                    System.out.println(a);
+                }
+                if (t != null) {
+                    System.out.println("sendDittoProtocol: Received throwable as response" + t);
+                }
+            });
+        }
+        else {
+            System.out.println("Had problems retrieving the wear_level");
+        }
+    }
+    
+    //Retrieve Last ChargeLevel value
+    public double retrieveCarChargeLevel() {
+        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+                JsonFactory.readFrom("{\n"
+                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
+                        + "  \"headers\": {\n"
+                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                        + "  },\n"
+                        + "  \"path\": \"/features/status/properties/charge-level\"\n"
+                        + "}\n").asObject());
+        double charge_level = -1.0;
+        try {
+            Adaptable adapt = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().get();
+            charge_level = adapt.getPayload().getValue().get().asDouble();
+        } catch (Exception e) {
+            System.out.println("Failed to retrieve chargelevel");
+            charge_level = -1.0;
+        }
+        return charge_level;
+    }
+    
+    /*
+     * Retrieves the wear of the given part.
+     */
+    private int retrieveWearLevel(String part) {
+        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+                JsonFactory.readFrom("{\n"
+                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
+                        + "  \"headers\": {\n"
+                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                        + "  },\n"
+                        + "  \"path\": \"/features/wear-time/properties/" + part + "\\n"
+                        + "}\n").asObject());
+        int wear_level = -1;
+        try {
+            Adaptable adapt = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().get();
+            System.out.println(adapt);
+            wear_level = adapt.getPayload().getValue().get().asInt();
+        } catch (Exception e) {
+            System.out.println("Failed to retrieve chargelevel");
+            wear_level = -1;
+        }
+        return wear_level;
+    }
+    
+    
+    //Controlla se il Twin Car è già stato creato
     private HttpStatus retrieveThing() {
         
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
@@ -157,7 +259,7 @@ public class CarClientConnection {
                 //
             }
             System.out.println(adapt.getPayload().getValue().get());
-            System.out.println(p.getCode());
+            //System.out.println(p.getCode());
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {

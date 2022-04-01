@@ -17,14 +17,17 @@ public class CarSimController {
                 carSimulation = new SimCar(this);
             }
             else {
-                System.out.println("Can't start car simulation without twin online");
+                String errorMsg = "Can't start car simulation without twin online";
+                System.out.println(errorMsg);
+                view.updateTextArea(errorMsg);
             }
         }
         else {
-            System.out.println("Can't start car simulation without ditto service");
+            String errorMsg = "Can't start car simulation without ditto service";
+            System.out.println(errorMsg);
+            view.updateTextArea(errorMsg);
         }
         this.view = view; 
-        //carSimulation.startCar();
     }
     
     public CarClientConnection getClientConnection() {

@@ -9,18 +9,17 @@ import tasks.DriveTask;
 public class SimCar {
     
     private CarSimController controller;
-    private ScheduledExecutorService exec;
+    public static ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
     private DriveTask driveTask;
     //private MaintenanceTask maintenanceTask;
     
     public SimCar(CarSimController controller) {
         System.out.println("car simulation starting.\n");
         this.controller = controller;
+        controller.getClientConnection().updateCarEngine(false);
         driveTask = new DriveTask(this);
-        exec = Executors.newSingleThreadScheduledExecutor();
         //Faccio partire i task che regolano la guida e la manutenzione
         exec.scheduleAtFixedRate(driveTask, 0, 3, TimeUnit.SECONDS);
-        //exec.scheduleAtFixedRate(maintenanceTask, 0, 3, TimeUnit.SECONDS);
     }
     
     public void startEngine() {

@@ -14,11 +14,11 @@ public final class UIController {
     
     @FXML
     private TextArea textArea;
-    private CarSimController controller = new CarSimController(this);
+    private CarSimController controller;
     
     @FXML
     private void initialize() {
-        
+        controller = new CarSimController(this);
     }
     
     @FXML
