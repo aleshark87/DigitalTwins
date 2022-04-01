@@ -123,8 +123,9 @@ public class CarClientConnection {
     //Shadowing Status Charge-Level
     public void updateCarChargeLevel(final double decrease) {
         double charge_level = retrieveCarChargeLevel();
+        JsonifiableAdaptable jsonifiableAdaptable = null;
         if(charge_level != -1.0) {
-            JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+            jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                     JsonFactory.readFrom("{\n"
                             + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
                             + "  \"headers\": {\n"
@@ -133,20 +134,27 @@ public class CarClientConnection {
                             + "  \"path\": \"/features/status/properties/charge-level\",\n"
                             + "  \"value\": " + (charge_level - decrease) + "\n"
                             + "}").asObject());
-            client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
         }
         else {
-            System.out.println("Had problems retrieving the charge_level");
+            jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+                    JsonFactory.readFrom("{\n"
+                            + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
+                            + "  \"headers\": {\n"
+                            + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                            + "  },\n"
+                            + "  \"path\": \"/features/status/properties/charge-level\",\n"
+                            + "  \"value\": " + "ERROR" + "\n"
+                            + "}").asObject());
         }
-        
+        client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
     }
     
     /*
      * Shadowing Wear Levels
      */
     public void updateWearLevel(final int increase, final String part) {
-        int wear_level = retrieveWearLevel(part);
-        if(wear_level != -1) {
+        Optional<Integer> wear_level = retrieveWearLevel(part);
+        if(wear_level.isPresent()) {
             JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                     JsonFactory.readFrom("{\n"
                             + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
@@ -154,7 +162,7 @@ public class CarClientConnection {
                             + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                             + "  },\n"
                             + "  \"path\": \"/features/wear-time/properties/"+part+"\",\n"
-                            + "  \"value\": " + (wear_level + increase) + "\n"
+                            + "  \"value\": " + (wear_level.get() + increase) + "\n"
                             + "}").asObject());
             client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
         }
@@ -166,7 +174,7 @@ public class CarClientConnection {
     /*
      * Retrieves the wear of the given part.
      */
-    private int retrieveWearLevel(String part) {
+    public Optional<Integer> retrieveWearLevel(String part) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
                         + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
@@ -175,10 +183,10 @@ public class CarClientConnection {
                         + "  },\n"
                         + "  \"path\": \"/features/wear-time/properties/"+part+"\"\n"
                         + "}\n").asObject());
-        int wear_level = -1;
+        Optional<Integer> wear_level = Optional.empty();
         CompletableFuture<Adaptable> complFuture = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture();
         var adapt = complFuture.join();
-        wear_level = adapt.getPayload().getValue().get().asInt();
+        wear_level = Optional.of(adapt.getPayload().getValue().get().asInt());
         
         return wear_level;
     }
