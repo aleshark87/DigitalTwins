@@ -1,5 +1,11 @@
 package tasks;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.eclipse.ditto.things.model.Features;
+import org.eclipse.ditto.things.model.Thing;
+
 import application.SimCar;
 
 public class DriveTask implements Runnable{
@@ -8,7 +14,7 @@ public class DriveTask implements Runnable{
     private SimCar simulationCar;
     
     public DriveTask(SimCar simulation) {
-        this.stop = true;
+        this.stop = false;
         this.simulationCar = simulation;
     }
     
@@ -17,21 +23,20 @@ public class DriveTask implements Runnable{
      */
     @Override
     public void run() {
-        if(!stop) {
+        if(stop) {
+            System.out.println("update charge-level");
             simulationCar.getController().getClientConnection().updateCarChargeLevel(0.5);
-            //simulationCar.getController().getClientConnection().updateWearLevel(5, "engine-wear");
-            System.out.println("cycle");
-            //simulationCar.getController().getClientConnection().updateBatteryWear(increase)
         }
     }
     
     public void stopEngine() {
-        stop = true;
+        stop = false;
         simulationCar.getController().getClientConnection().updateCarEngine(false);
     }
     
     public void startEngine() {
-        stop = false;
+        System.out.println("start engine");
+        stop = true;
         simulationCar.getController().getClientConnection().updateCarEngine(true);
     }
 

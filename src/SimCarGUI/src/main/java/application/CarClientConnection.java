@@ -74,6 +74,7 @@ public class CarClientConnection {
         if(connectionStatus) {
             if(retrieveThing().getCode() == 200) {
                 twinStatus = true;
+                /*
                 SimCar.exec.scheduleAtFixedRate(new Runnable() {
 
                     @Override
@@ -85,6 +86,7 @@ public class CarClientConnection {
                     }
                     
                 }, 0, 3,TimeUnit.SECONDS);
+                */
             }
         }
         //subscribeForMessages();
@@ -117,6 +119,7 @@ public class CarClientConnection {
 
     //Shadowing Status Engine
     public void updateCarEngine(final boolean state) {
+        System.out.println("state " + state);
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
                         + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
@@ -128,12 +131,21 @@ public class CarClientConnection {
                         + "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
             if (a != null) {
-                //System.out.println(a);
+                System.out.println(a);
+                System.out.println(getThingFeatures()); 
             }
             if (t != null) {
                 System.out.println("sendDittoProtocol: Received throwable as response" + t);
             }
         });
+    }
+    
+    private Features getThingFeatures() {
+        List<Thing> list = client.twin()
+                                 .search()
+                                 .stream(queryBuilder -> queryBuilder.namespace("io.eclipseprojects.ditto"))
+                                 .collect(Collectors.toList());
+        return list.get(0).getFeatures().get();
     }
     
     //Shadowing Status Charge-Level
@@ -239,7 +251,7 @@ public class CarClientConnection {
     
     
     //Controlla se il Twin Car è già stato creato
-    private HttpStatus retrieveThing() {
+    public HttpStatus retrieveThing() {
         
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
@@ -268,12 +280,11 @@ public class CarClientConnection {
         return p;
     }
     
-    private Features getThingFeatures() {
-        List<Thing> list = client.twin()
-                                 .search()
-                                 .stream(queryBuilder -> queryBuilder.namespace("io.eclipseprojects.ditto"))
-                                 .collect(Collectors.toList());
-        return list.get(0).getFeatures().get();
+    
+    
+    
+    public DittoClient getDittoClient() {
+        return this.client;
     }
     
     //Returns True if the client is connected to ditto endpoint, False otherwards.
