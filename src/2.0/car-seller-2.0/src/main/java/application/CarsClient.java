@@ -76,11 +76,11 @@ public class CarsClient {
         httpRequests = new CarHttpRequests();
         if(checkIfThingExists().getCode() == 404) {
         	createCarThing();
+        	resetThing();
         }
         else {
         	resetThing();
         }
-        printThingFeatures();
         //subscribeForNotification();
         //supervisor = new MaintenanceSupervisor(this);
         
@@ -198,24 +198,35 @@ public class CarsClient {
                         + "  },\n"
                         + "  \"path\": \"/features\",\n"
                         + "  \"value\": {\n"
-                        + "    \"status\": {\n"
+                        + "    \n"
+                        + "   \"status\": {\n"
+                        + "      \"definition\": [\n"
+                        + "         \"https://raw.githubusercontent.com/aleshark87/WoTModels/main/status.jsonld\"\n"
+                        + "      ],\n"
                         + "      \"properties\": {\n"
-                        + "        \"engine\": false,\n"
-                        + "        \"charge-level\": 100.0\n"
+                        + "         \"engine\": false,\n"
+                        + "         \"charge-level\": 100.0\n"
                         + "      }\n"
-                        + "    },\n"
-                        + "    \"indicator-light\": {\n"
+                        + "   },\n"
+                        + "   \"indicator-light\": {\n"
+                        + "      \"definition\": [\n"
+                        + "         \"https://raw.githubusercontent.com/aleshark87/WoTModels/main/indicator-light.jsonld\"\n"
+                        + "      ],\n"
                         + "      \"properties\": {\n"
-                        + "        \"battery-indicator\": false,\n"
-                        + "        \"engine-indicator\": false\n"
+                        + "         \"battery-indicator\": false,\n"
+                        + "         \"engine-indicator\": false\n"
                         + "      }\n"
-                        + "    },\n"
-                        + "    \"wear-time\": {\n"
+                        + "   },\n"
+                        + "   \"wear-time\": {\n"
+                        + "      \"definition\": [\n"
+                        + "         \"https://raw.githubusercontent.com/aleshark87/WoTModels/main/WearTime.jsonld\"\n"
+                        + "        ],\n"
                         + "      \"properties\": {\n"
-                        + "        \"battery-wear\": 0,\n"
-                        + "        \"engine-wear\": 0\n"
+                        + "         \"battery-wear\": 0,\n"
+                        + "         \"engine-wear\": 0\n"
                         + "      }\n"
-                        + "    }\n"
+                        + "   }\n"
+                        + "\n"
                         + "  }\n"
                         + "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {

@@ -23,12 +23,12 @@ public final class UIController {
     
     @FXML
     public void startBtnClicked() {
-        textArea.setText("start btn clicked");
+        controller.getCarSimulation().startEngine();
     }
     
     @FXML
     public void stopBtnClicked() {
-        textArea.setText("stop btn clicked");
+        controller.getCarSimulation().stopEngine();
     }
     
     public void updateTextArea(String text) {

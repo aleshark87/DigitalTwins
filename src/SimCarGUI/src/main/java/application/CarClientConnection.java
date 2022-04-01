@@ -115,16 +115,16 @@ public class CarClientConnection {
     }
     */
 
-    //Shadowing Tempo Motore
-    public void updateCarEngine(final int counter) {
+    //Shadowing Status Motore
+    public void updateCarEngine(final boolean state) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"org.eclipse.ditto/car/things/twin/commands/modify\",\n"
+                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
                         + "  \"headers\": {\n"
                         + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                         + "  },\n"
-                        + "  \"path\": \"/features/parts_time/properties/engine\",\n"
-                        + "  \"value\": " + counter + "\n"
+                        + "  \"path\": \"/features/status/properties/engine\",\n"
+                        + "  \"value\": " + state + "\n"
                         + "}").asObject());
         client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
             if (a != null) {

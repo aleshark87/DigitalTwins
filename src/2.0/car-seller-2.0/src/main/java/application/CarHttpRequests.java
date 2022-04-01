@@ -14,7 +14,7 @@ public class CarHttpRequests {
     private final String usernameColonPassword = "ditto:ditto";
     private final String basicAuthPayload = "Basic " + Base64.getEncoder().encodeToString(usernameColonPassword.getBytes());
     private final String payloadThingCreation = "{\n"
-            + "    \"definition\": \"https://raw.githubusercontent.com/aleshark87/WoTModels/main/car.jsonld\"\n"
+            + "    \"definition\": \"https://raw.githubusercontent.com/aleshark87/WoTModels/main/car.tm.jsonld\"\n"
             + "}";
     private HttpClient client;
     

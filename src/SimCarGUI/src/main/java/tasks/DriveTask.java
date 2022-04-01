@@ -4,12 +4,10 @@ import application.SimCar;
 
 public class DriveTask implements Runnable{
 
-    private int distanceCounter;
     private boolean stop;
     private SimCar simulationCar;
     
     public DriveTask(SimCar simulation) {
-        this.distanceCounter = 0;
         this.stop = true;
         this.simulationCar = simulation;
     }
@@ -17,18 +15,18 @@ public class DriveTask implements Runnable{
     @Override
     public void run() {
         if(!stop) {
-            distanceCounter++;
-            simulationCar.getController().getClientConnection().updateCarEngine(distanceCounter);
+            System.out.println("currently driving");
         }
     }
     
-    public void stop() {
+    public void stopEngine() {
         stop = true;
-        distanceCounter = 0;
+        simulationCar.getController().getClientConnection().updateCarEngine(false);
     }
     
-    public void start() {
+    public void startEngine() {
         stop = false;
+        simulationCar.getController().getClientConnection().updateCarEngine(true);
     }
 
 }

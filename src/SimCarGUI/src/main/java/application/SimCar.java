@@ -17,16 +17,18 @@ public class SimCar {
         System.out.println("car simulation starting.\n");
         this.controller = controller;
         driveTask = new DriveTask(this);
-        //maintenanceTask = new MaintenanceTask(this);
         exec = Executors.newSingleThreadScheduledExecutor();
         //Faccio partire i task che regolano la guida e la manutenzione
         exec.scheduleAtFixedRate(driveTask, 0, 3, TimeUnit.SECONDS);
         //exec.scheduleAtFixedRate(maintenanceTask, 0, 3, TimeUnit.SECONDS);
     }
     
-    public void startCar() {
-        System.out.println("The car starts.");
-        driveTask.start();
+    public void startEngine() {
+        driveTask.startEngine();
+    }
+    
+    public void stopEngine() {
+        driveTask.stopEngine();
     }
     
     public CarSimController getController() {
