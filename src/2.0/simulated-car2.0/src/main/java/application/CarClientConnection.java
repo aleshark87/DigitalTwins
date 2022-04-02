@@ -79,6 +79,9 @@ public class CarClientConnection {
                 .join();
     }
     
+  
+    }
+    
 private HttpStatus checkIfThingExists() {
         
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
@@ -106,28 +109,7 @@ private HttpStatus checkIfThingExists() {
         return p;
     }
     
-    private void subscribeForMessages() {
-        try {
-            client.live().startConsumption().toCompletableFuture().get();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        ThingId thingId = ThingId.of("io.eclipseprojects.ditto", "car");
-        final LiveThingHandle thingIdLive = client.live().forId(thingId);
-        // Register for *all* messages of a *specific* thing and provide payload as String
-        thingIdLive.registerForMessage("msg_maintenance", "supervisor.maintenance", String.class, message -> {
-            final Optional<String> payload = message.getPayload();
-            if(payload.get().equals("DoMaintenance")) {
-                //controller.getCarSimulation().maintenance();
-            }
-            else {
-                if(payload.get().equals("DoneMaintenance")) {
-                    /*controller.getCarSimulation().maintenanceDone();
-                    controller.getCarSimulation().startCar();*/
-                }
-            }
-        });
-    }
+    
     
     //Shadowing tempo di manutenzione
     public void updateMaintenanceTime(int time) {

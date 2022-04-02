@@ -22,19 +22,15 @@ public class DriveTask implements Runnable{
         this.connection = simulation.getController().getClientConnection();
     }
     
-    /* During the drive, the charge-level of the battery decrease of 0.5 for each cycle, the wear of the engine increase
-     * 1 for each cycle, and the wear of the battery increase 2 for each cycle when the charge-level is less than 70.
-     * 10 if its less than 30.
-     */
     @Override
     public void run() {
         if(stop) {
-            connection.updateCarChargeLevel(1.0);
+            connection.updateCarChargeLevel(2.9);
             connection.updateWearLevel(1, "engine-wear");
             Optional<Double> chargeLevel = connection.retrieveCarChargeLevel();
             if(chargeLevel.isPresent()) {
-                if(chargeLevel.get() < 80.0) {
-                    connection.updateWearLevel(1, "battery-wear");
+                if(chargeLevel.get() < 50.0) {
+                    connection.updateWearLevel(2, "battery-wear");
                 }
             }
             controlWears();

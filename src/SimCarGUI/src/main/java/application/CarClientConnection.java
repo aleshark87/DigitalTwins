@@ -77,33 +77,18 @@ public class CarClientConnection {
                 twinStatus = true;
             }
         }
-        //subscribeForMessages();
     }
-    
-    /*
-    private void subscribeForMessages() {
-        try {
-            client.live().startConsumption().toCompletableFuture().get();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
+    void sendIndicatorMessage(String part) {
+        //System.out.println("sending message " + part);
         ThingId thingId = ThingId.of("io.eclipseprojects.ditto", "car");
-        final LiveThingHandle thingIdLive = client.live().forId(thingId);
-        // Register for *all* messages of a *specific* thing and provide payload as String
-        thingIdLive.registerForMessage("msg_maintenance", "supervisor.maintenance", String.class, message -> {
-            final Optional<String> payload = message.getPayload();
-            if(payload.get().equals("DoMaintenance")) {
-                controller.getCarSimulation().maintenance();
-            }
-            else {
-                if(payload.get().equals("DoneMaintenance")) {
-                    controller.getCarSimulation().maintenanceDone();
-                    controller.getCarSimulation().startCar();
-                }
-            }
-        });
+        client.live().message()
+                               .to(thingId)
+                               .subject("car.maintenance")
+                               .payload(part)
+                               .contentType("text/plain")
+                               .send();
     }
-    */
     
     //Shadowing Status Engine
     public void updateCarEngine(final boolean state) {
@@ -225,11 +210,32 @@ public class CarClientConnection {
                         + "  \"value\": " + value + "\n"
                         + "}").asObject());
         try {
+            sendIndicatorMessage(part);
             client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
         }catch (Exception e) {
             e.printStackTrace();
         }
-        
+    }
+    
+    private Optional<Boolean> retrieveIndicatorLight(String part){
+        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+                JsonFactory.readFrom("{\n"
+                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
+                        + "  \"headers\": {\n"
+                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                        + "  },\n"
+                        + "  \"path\": \"/features/indicator-light/properties/" + part + "\"\n"
+                        + "}\n").asObject());
+        Optional<Boolean> indicator_light = Optional.empty();
+        try {
+            CompletableFuture<Adaptable> complFuture = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture();
+            var adapt = complFuture.join();
+            indicator_light = Optional.of(adapt.getPayload().getValue().get().asBoolean());
+        } catch(Exception e) {
+            indicator_light = Optional.empty();
+            e.printStackTrace();
+        }
+        return indicator_light;
     }
     
     /*

@@ -47,7 +47,6 @@ public class CarsClient {
     private AuthenticationProvider<WebSocket> authenticationProvider;
     private MessagingProvider messagingProvider;
     private DittoClient client;
-    private MaintenanceSupervisor supervisor;
     private ThingId thingId = ThingId.of("io.eclipseprojects.ditto", "car");
     
     private void createAuthProvider() {
@@ -78,6 +77,7 @@ public class CarsClient {
         	resetThing();
         }
         //subscribeForNotification();
+        subscribeForMessages();
         //supervisor = new MaintenanceSupervisor(this);
         
     }
@@ -91,46 +91,7 @@ public class CarsClient {
                 .join();
     }
     
-    private void subscribeForNotification() {
-        try {
-            client.twin().startConsumption().toCompletableFuture().get();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        client.twin().registerForThingChanges("car-changes", change -> {
-           if (change.getAction() == ChangeAction.UPDATED) {
-               
-           }
-        });
-        //Registrazione agli eventi generati dai modify-command 
-        client.twin().registerForFeaturePropertyChanges("parts-changes", CarFeatures.PARTS_TIME.get(), change -> {
-            if(change.getPath().getRoot().get().toString().equals("engine")) {
-                supervisor.checkForMaintenance(change.getValue().get().asInt());
-            }
-        });
-        client.twin().registerForFeaturePropertyChanges("maintenance-changes", CarFeatures.PARTS_MAINTENANCE.get(), change -> {
-            if(change.getPath().getRoot().get().toString().equals("engine")) {
-                supervisor.checkForEndMaintenance(change.getValue().get().asInt());
-            }
-        });
-    }
     
-    //Segnala al Thing Car che è necessario eseguire manutenzione, oppure che è finita
-    void updateMaintenance(boolean value) {
-        String payloadString = "";
-        if(value) {
-            payloadString = "DoMaintenance";
-        }
-        else {
-            payloadString = "DoneMaintenance";
-        }
-        client.live().message()
-                               .to(thingId)
-                               .subject("supervisor.maintenance")
-                               .payload(payloadString)
-                               .contentType("text/plain")
-                               .send();
-    }
     
     private void subscribeForMessages() {
         try {
@@ -141,15 +102,15 @@ public class CarsClient {
         ThingId thingId = ThingId.of("io.eclipseprojects.ditto", "car");
         final LiveThingHandle thingIdLive = client.live().forId(thingId);
         // Register for *all* messages of a *specific* thing and provide payload as String
-        thingIdLive.registerForMessage("msg_maintenance", "supervisor.maintenance", String.class, message -> {
+        thingIdLive.registerForMessage("msg_maintenance", "car.maintenance", String.class, message -> {
             final Optional<String> payload = message.getPayload();
-            if(payload.get().equals("DoMaintenance")) {
-                //controller.getCarSimulation().maintenance();
+            //System.out.println(payload.get());
+            if(payload.get().equals("engine-indicator")) {
+                System.out.println(thingId.getNamespace() + thingId.getName() + " needs an engine maintenance.");
             }
             else {
-                if(payload.get().equals("DoneMaintenance")) {
-                    /*controller.getCarSimulation().maintenanceDone();
-                    controller.getCarSimulation().startCar();*/
+                if(payload.get().equals("battery-indicator")) {
+                    System.out.println(thingId.getNamespace() + thingId.getName() + " needs a battery maintenance.");
                 }
             }
         });
