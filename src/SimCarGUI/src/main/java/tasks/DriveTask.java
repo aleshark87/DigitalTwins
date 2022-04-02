@@ -1,6 +1,7 @@
 package tasks;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.eclipse.ditto.things.model.Features;
@@ -28,10 +29,13 @@ public class DriveTask implements Runnable{
     @Override
     public void run() {
         if(stop) {
-            connection.updateCarChargeLevel(5.0);
+            connection.updateCarChargeLevel(1.0);
             connection.updateWearLevel(1, "engine-wear");
-            if(connection.retrieveCarChargeLevel() < 70.0) {
-                connection.updateWearLevel(2, "battery-wear");
+            Optional<Double> chargeLevel = connection.retrieveCarChargeLevel();
+            if(chargeLevel.isPresent()) {
+                if(chargeLevel.get() < 80.0) {
+                    connection.updateWearLevel(10, "battery-wear");
+                }
             }
         }
     }
