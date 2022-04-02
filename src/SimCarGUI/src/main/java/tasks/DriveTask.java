@@ -34,8 +34,25 @@ public class DriveTask implements Runnable{
             Optional<Double> chargeLevel = connection.retrieveCarChargeLevel();
             if(chargeLevel.isPresent()) {
                 if(chargeLevel.get() < 80.0) {
-                    connection.updateWearLevel(10, "battery-wear");
+                    connection.updateWearLevel(1, "battery-wear");
                 }
+            }
+            controlWears();
+        }
+    }
+    
+    private void controlWears() {
+        Optional<Integer> engineWear = connection.retrieveWearLevel("engine-wear");
+        Optional<Integer> batteryWear = connection.retrieveWearLevel("battery-wear");
+        if(engineWear.isPresent()) {
+            if(engineWear.get() > 50) {
+                connection.updateIndicatorLight("engine-indicator", true);
+            }
+        }
+        
+        if(batteryWear.isPresent()) {
+            if(batteryWear.get() > 50) {
+                connection.updateIndicatorLight("battery-indicator", true);
             }
         }
     }

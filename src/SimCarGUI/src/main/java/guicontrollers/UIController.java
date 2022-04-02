@@ -31,6 +31,11 @@ public final class UIController {
         controller.getCarSimulation().stopEngine();
     }
     
+    @FXML
+    public void chargeBtnClicked() {
+        controller.getCarSimulation().chargeCar();
+    }
+    
     public void updateTextArea(String text) {
         Platform.runLater(new Runnable() {
 

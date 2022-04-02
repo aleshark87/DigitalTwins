@@ -24,6 +24,7 @@ import org.eclipse.ditto.client.changes.ChangeAction;
 import org.eclipse.ditto.client.configuration.BasicAuthenticationConfiguration;
 import org.eclipse.ditto.client.configuration.MessagingConfiguration;
 import org.eclipse.ditto.client.configuration.WebSocketMessagingConfiguration;
+import org.eclipse.ditto.client.live.LiveThingHandle;
 import org.eclipse.ditto.client.messaging.AuthenticationProvider;
 import org.eclipse.ditto.client.messaging.AuthenticationProviders;
 import org.eclipse.ditto.client.messaging.MessagingProvider;
@@ -34,12 +35,7 @@ import org.eclipse.ditto.protocol.JsonifiableAdaptable;
 import org.eclipse.ditto.protocol.ProtocolFactory;
 import org.eclipse.ditto.things.model.Thing;
 import org.eclipse.ditto.things.model.ThingId;
-
-import com.andrebreves.tuple.Tuple;
-import com.andrebreves.tuple.Tuple2;
 import com.neovisionaries.ws.client.WebSocket;
-
-import car_model.CarFeatures;
 
 public class CarsClient {
     
@@ -95,17 +91,6 @@ public class CarsClient {
                 .join();
     }
     
-    
-
-    private String printThingFeatures() {
-        List<Thing> list = client.twin()
-                                 .search()
-                                 .stream(queryBuilder -> queryBuilder.namespace("io.eclipseprojects.ditto"))
-                                 .collect(Collectors.toList());
-        System.out.println(list);
-        return list.get(0).getFeatures().get().toJsonString();
-    }
-    
     private void subscribeForNotification() {
         try {
             client.twin().startConsumption().toCompletableFuture().get();
@@ -145,6 +130,29 @@ public class CarsClient {
                                .payload(payloadString)
                                .contentType("text/plain")
                                .send();
+    }
+    
+    private void subscribeForMessages() {
+        try {
+            client.live().startConsumption().toCompletableFuture().get();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        ThingId thingId = ThingId.of("io.eclipseprojects.ditto", "car");
+        final LiveThingHandle thingIdLive = client.live().forId(thingId);
+        // Register for *all* messages of a *specific* thing and provide payload as String
+        thingIdLive.registerForMessage("msg_maintenance", "supervisor.maintenance", String.class, message -> {
+            final Optional<String> payload = message.getPayload();
+            if(payload.get().equals("DoMaintenance")) {
+                //controller.getCarSimulation().maintenance();
+            }
+            else {
+                if(payload.get().equals("DoneMaintenance")) {
+                    /*controller.getCarSimulation().maintenanceDone();
+                    controller.getCarSimulation().startCar();*/
+                }
+            }
+        });
     }
     
     //Crea il Thing Car

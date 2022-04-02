@@ -128,6 +128,7 @@ private HttpStatus checkIfThingExists() {
             }
         });
     }
+    
     //Shadowing tempo di manutenzione
     public void updateMaintenanceTime(int time) {
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(

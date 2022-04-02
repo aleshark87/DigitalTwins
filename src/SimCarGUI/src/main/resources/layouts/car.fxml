@@ -44,6 +44,7 @@
             <TextArea fx:id="textArea" layoutX="110.0" layoutY="39.0" prefHeight="300.0" prefWidth="500.0" style="fx-text-alignment: center;" AnchorPane.leftAnchor="110.0" AnchorPane.topAnchor="39.0" />
             <Button layoutX="110.0" layoutY="462.0" mnemonicParsing="false" onAction="#startBtnClicked" prefHeight="50.0" prefWidth="100.0" text="START" AnchorPane.leftAnchor="110.0" />
             <Button layoutX="510.0" layoutY="462.0" mnemonicParsing="false" onAction="#stopBtnClicked" prefHeight="50.0" prefWidth="100.0" text="STOP" AnchorPane.rightAnchor="110.0" />
+            <Button layoutX="316.0" layoutY="462.0" mnemonicParsing="false" onAction="#chargeBtnClicked" prefHeight="50.0" prefWidth="100.0" text="CHARGE" />
          </children>
     </AnchorPane>
   </children>
