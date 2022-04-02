@@ -47,7 +47,6 @@ public class CarsClient {
     private AuthenticationProvider<WebSocket> authenticationProvider;
     private MessagingProvider messagingProvider;
     private DittoClient client;
-    private ThingId thingId = ThingId.of("io.eclipseprojects.ditto", "car");
     
     private void createAuthProvider() {
         authenticationProvider = AuthenticationProviders.basic((

@@ -25,12 +25,12 @@ public class DriveTask implements Runnable{
     @Override
     public void run() {
         if(stop) {
-            connection.updateCarChargeLevel(2.9);
-            connection.updateWearLevel(1, "engine-wear");
-            Optional<Double> chargeLevel = connection.retrieveCarChargeLevel();
+            connection.getUpdateProperty().updateCarChargeLevel(5);
+            connection.getUpdateProperty().updateWearLevel(1, "engine-wear");
+            Optional<Double> chargeLevel = connection.getRetrieveProperty().retrieveCarChargeLevel();
             if(chargeLevel.isPresent()) {
                 if(chargeLevel.get() < 50.0) {
-                    connection.updateWearLevel(2, "battery-wear");
+                    connection.getUpdateProperty().updateWearLevel(5, "battery-wear");
                 }
             }
             controlWears();
@@ -38,29 +38,29 @@ public class DriveTask implements Runnable{
     }
     
     private void controlWears() {
-        Optional<Integer> engineWear = connection.retrieveWearLevel("engine-wear");
-        Optional<Integer> batteryWear = connection.retrieveWearLevel("battery-wear");
+        Optional<Integer> engineWear = connection.getRetrieveProperty().retrieveWearLevel("engine-wear");
+        Optional<Integer> batteryWear = connection.getRetrieveProperty().retrieveWearLevel("battery-wear");
         if(engineWear.isPresent()) {
             if(engineWear.get() > 50) {
-                connection.updateIndicatorLight("engine-indicator", true);
+                connection.getUpdateProperty().updateIndicatorLight("engine-indicator", true);
             }
         }
         
         if(batteryWear.isPresent()) {
             if(batteryWear.get() > 50) {
-                connection.updateIndicatorLight("battery-indicator", true);
+                connection.getUpdateProperty().updateIndicatorLight("battery-indicator", true);
             }
         }
     }
     
     public void stopEngine() {
         stop = false;
-        simulationCar.getController().getClientConnection().updateCarEngine(false);
+        simulationCar.getController().getClientConnection().getUpdateProperty().updateCarEngine(false);
     }
     
     public void startEngine() {
         stop = true;
-        simulationCar.getController().getClientConnection().updateCarEngine(true);
+        simulationCar.getController().getClientConnection().getUpdateProperty().updateCarEngine(true);
     }
 
 }

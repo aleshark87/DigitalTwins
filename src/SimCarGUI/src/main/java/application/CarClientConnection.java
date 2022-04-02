@@ -38,6 +38,8 @@ public class CarClientConnection {
     private AuthenticationProvider<WebSocket> authenticationProvider;
     private MessagingProvider messagingProvider;
     private DittoClient client;
+    private UpdateThingProperty updateProperty;
+    private RetrieveThingProperty retrieveProperty;
     private boolean connectionStatus = false;
     private boolean twinStatus = false;
     
@@ -61,6 +63,7 @@ public class CarClientConnection {
     public CarClientConnection(CarSimController controller) {
         System.out.println("car client connection starting.\n");
         this.controller = controller;
+        
         createAuthProvider();
         createMessageProvider();
         try {
@@ -77,9 +80,11 @@ public class CarClientConnection {
                 twinStatus = true;
             }
         }
+        updateProperty = new UpdateThingProperty(client, this);
+        retrieveProperty = new RetrieveThingProperty(client);
     }
 
-    void sendIndicatorMessage(String part) {
+    public void sendIndicatorMessage(String part) {
         //System.out.println("sending message " + part);
         ThingId thingId = ThingId.of("io.eclipseprojects.ditto", "car");
         client.live().message()
@@ -90,207 +95,6 @@ public class CarClientConnection {
                                .send();
     }
     
-    //Shadowing Status Engine
-    public void updateCarEngine(final boolean state) {
-        //System.out.println("state " + state);
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
-                        + "  \"headers\": {\n"
-                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                        + "  },\n"
-                        + "  \"path\": \"/features/status/properties/engine\",\n"
-                        + "  \"value\": " + state + "\n"
-                        + "}").asObject());
-        client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
-    }
-    
-    //Shadowing Status Charge-Level
-    public void updateCarChargeLevel(final double decrease) {
-        Optional<Double> charge_level = retrieveCarChargeLevel();
-        JsonifiableAdaptable jsonifiableAdaptable = null;
-        if(charge_level.isPresent()) {
-            double newChargeLevel = (charge_level.get() - decrease);
-            if(newChargeLevel <= 0.0) {
-                if(newChargeLevel < 0.0) {
-                    newChargeLevel = 0.0;
-                }
-                this.controller.getCarSimulation().stopEngine();
-            }
-            jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                    JsonFactory.readFrom("{\n"
-                            + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
-                            + "  \"headers\": {\n"
-                            + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                            + "  },\n"
-                            + "  \"path\": \"/features/status/properties/charge-level\",\n"
-                            + "  \"value\": " + newChargeLevel + "\n"
-                            + "}").asObject());
-        }
-        else {
-            jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                    JsonFactory.readFrom("{\n"
-                            + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
-                            + "  \"headers\": {\n"
-                            + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                            + "  },\n"
-                            + "  \"path\": \"/features/status/properties/charge-level\",\n"
-                            + "  \"value\": " + "ERROR" + "\n"
-                            + "}").asObject());
-        }
-        client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
-    }
-    
-    public void chargeCarFull() {
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
-                        + "  \"headers\": {\n"
-                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                        + "  },\n"
-                        + "  \"path\": \"/features/status/properties/charge-level\",\n"
-                        + "  \"value\": " + 100.0 + "\n"
-                        + "}").asObject());
-        client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
-    }
-    
-  //Retrieve Last ChargeLevel value
-    public Optional<Double> retrieveCarChargeLevel() {
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
-                        + "  \"headers\": {\n"
-                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                        + "  },\n"
-                        + "  \"path\": \"/features/status/properties/charge-level\"\n"
-                        + "}\n").asObject());
-        Optional<Double> charge_level = Optional.empty();
-        try {
-            CompletableFuture<Adaptable> complFuture = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture();
-            var adapt = complFuture.join();
-            charge_level = Optional.of(adapt.getPayload().getValue().get().asDouble());
-            //System.out.println(charge_level);
-        } catch (Exception e) {
-            System.out.println("Failed to retrieve chargelevel");
-            charge_level = Optional.empty();
-        }
-        return charge_level;
-    }
-    
-    public Optional<Boolean> retrieveEngineStatus(){
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
-                        + "  \"headers\": {\n"
-                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                        + "  },\n"
-                        + "  \"path\": \"/features/status/properties/engine\"\n"
-                        + "}\n").asObject());
-        Optional<Boolean> engine_status = Optional.empty();
-        try {
-            CompletableFuture<Adaptable> complFuture = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture();
-            var adapt = complFuture.join();
-            engine_status = Optional.of(adapt.getPayload().getValue().get().asBoolean());
-            //System.out.println(charge_level);
-        } catch (Exception e) {
-            System.out.println("Failed to retrieve chargelevel");
-            engine_status = Optional.empty();
-        }
-        return engine_status;
-    }
-    
-    public void updateIndicatorLight(String part, boolean value) {
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
-                        + "  \"headers\": {\n"
-                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                        + "  },\n"
-                        + "  \"path\": \"/features/indicator-light/properties/" + part + "\",\n"
-                        + "  \"value\": " + value + "\n"
-                        + "}").asObject());
-        try {
-            sendIndicatorMessage(part);
-            client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
-        }catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    
-    private Optional<Boolean> retrieveIndicatorLight(String part){
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
-                        + "  \"headers\": {\n"
-                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                        + "  },\n"
-                        + "  \"path\": \"/features/indicator-light/properties/" + part + "\"\n"
-                        + "}\n").asObject());
-        Optional<Boolean> indicator_light = Optional.empty();
-        try {
-            CompletableFuture<Adaptable> complFuture = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture();
-            var adapt = complFuture.join();
-            indicator_light = Optional.of(adapt.getPayload().getValue().get().asBoolean());
-        } catch(Exception e) {
-            indicator_light = Optional.empty();
-            e.printStackTrace();
-        }
-        return indicator_light;
-    }
-    
-    /*
-     * Shadowing Wear Levels
-     */
-    public void updateWearLevel(final int increase, final String part) {
-        Optional<Integer> wear_level = retrieveWearLevel(part);
-        if(wear_level.isPresent()) {
-            int newLevel = wear_level.get() + increase;
-            if(newLevel >= 100) {
-                this.controller.getCarSimulation().stopEngine();
-                if(newLevel > 100) {
-                    newLevel = 100;
-                }
-            }
-            JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                    JsonFactory.readFrom("{\n"
-                            + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
-                            + "  \"headers\": {\n"
-                            + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                            + "  },\n"
-                            + "  \"path\": \"/features/wear-time/properties/"+part+"\",\n"
-                            + "  \"value\": " + newLevel + "\n"
-                            + "}").asObject());
-            client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
-        }
-        else {
-            System.out.println("Had problems retrieving the wear_level");
-        }
-    }
-    
-    /*
-     * Retrieves the wear of the given part.
-     */
-    public Optional<Integer> retrieveWearLevel(String part) {
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
-                        + "  \"headers\": {\n"
-                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                        + "  },\n"
-                        + "  \"path\": \"/features/wear-time/properties/"+part+"\"\n"
-                        + "}\n").asObject());
-        Optional<Integer> wear_level = Optional.empty();
-        try {
-            CompletableFuture<Adaptable> complFuture = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture();
-            var adapt = complFuture.join();
-            wear_level = Optional.of(adapt.getPayload().getValue().get().asInt());
-        } catch(Exception e) {
-            wear_level = Optional.empty();
-            e.printStackTrace();
-        }
-        return wear_level;
-    }
-   
     //Controlla se il Twin Car è già stato creato
     public HttpStatus retrieveThing() {
         
@@ -317,7 +121,17 @@ public class CarClientConnection {
     }
     
     
+    public UpdateThingProperty getUpdateProperty() {
+        return this.updateProperty;
+    }
     
+    public RetrieveThingProperty getRetrieveProperty() {
+        return this.retrieveProperty;
+    }
+    
+    public CarSimController getSimController() {
+        return this.controller;
+    }
     
     public DittoClient getDittoClient() {
         return this.client;
