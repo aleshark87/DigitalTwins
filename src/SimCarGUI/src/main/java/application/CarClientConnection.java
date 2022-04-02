@@ -1,13 +1,5 @@
 package application;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
 import org.eclipse.ditto.base.model.common.HttpStatus;
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DittoClient;
@@ -15,7 +7,6 @@ import org.eclipse.ditto.client.DittoClients;
 import org.eclipse.ditto.client.configuration.BasicAuthenticationConfiguration;
 import org.eclipse.ditto.client.configuration.MessagingConfiguration;
 import org.eclipse.ditto.client.configuration.WebSocketMessagingConfiguration;
-import org.eclipse.ditto.client.live.LiveThingHandle;
 import org.eclipse.ditto.client.messaging.AuthenticationProvider;
 import org.eclipse.ditto.client.messaging.AuthenticationProviders;
 import org.eclipse.ditto.client.messaging.MessagingProvider;
@@ -24,8 +15,6 @@ import org.eclipse.ditto.json.JsonFactory;
 import org.eclipse.ditto.protocol.Adaptable;
 import org.eclipse.ditto.protocol.JsonifiableAdaptable;
 import org.eclipse.ditto.protocol.ProtocolFactory;
-import org.eclipse.ditto.things.model.Features;
-import org.eclipse.ditto.things.model.Thing;
 import org.eclipse.ditto.things.model.ThingId;
 
 import com.neovisionaries.ws.client.WebSocket;
@@ -95,7 +84,6 @@ public class CarClientConnection {
                                .send();
     }
     
-    //Controlla se il Twin Car è già stato creato
     public HttpStatus retrieveThing() {
         
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
@@ -142,7 +130,7 @@ public class CarClientConnection {
         return this.connectionStatus;
     }
     
-  //Returns True if the twin exists is, False otherwards.
+    //Returns True if the twin exists is, False otherwards.
     public boolean getTwinStatus() {
         return this.twinStatus;
     }

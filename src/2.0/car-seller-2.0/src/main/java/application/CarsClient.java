@@ -1,26 +1,11 @@
 package application;
 
-import java.io.IOException;
-import java.util.Base64;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 import org.eclipse.ditto.base.model.common.HttpStatus;
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DittoClient;
 import org.eclipse.ditto.client.DittoClients;
-import org.eclipse.ditto.client.changes.ChangeAction;
 import org.eclipse.ditto.client.configuration.BasicAuthenticationConfiguration;
 import org.eclipse.ditto.client.configuration.MessagingConfiguration;
 import org.eclipse.ditto.client.configuration.WebSocketMessagingConfiguration;
@@ -33,7 +18,6 @@ import org.eclipse.ditto.json.JsonFactory;
 import org.eclipse.ditto.protocol.Adaptable;
 import org.eclipse.ditto.protocol.JsonifiableAdaptable;
 import org.eclipse.ditto.protocol.ProtocolFactory;
-import org.eclipse.ditto.things.model.Thing;
 import org.eclipse.ditto.things.model.ThingId;
 import com.neovisionaries.ws.client.WebSocket;
 

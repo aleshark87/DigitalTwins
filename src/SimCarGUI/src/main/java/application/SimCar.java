@@ -1,7 +1,6 @@
 package application;
 
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -14,7 +13,6 @@ public class SimCar {
     private CarSimController controller;
     private DriveTask driveTask;
     private GUIUpdateTask guiUpdateTask;
-    //private MaintenanceTask maintenanceTask;
     
     public SimCar(CarSimController controller) {
         System.out.println("car simulation starting.\n");

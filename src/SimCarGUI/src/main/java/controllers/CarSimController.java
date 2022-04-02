@@ -42,9 +42,4 @@ public class CarSimController {
         return this.view;
     }
     
-    /*
-    public static void main(String[] args) {
-        new RunCarSimulation();
-    }
-    */
 }

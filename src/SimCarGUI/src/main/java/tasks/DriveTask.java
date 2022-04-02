@@ -1,11 +1,6 @@
 package tasks;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-
-import org.eclipse.ditto.things.model.Features;
-import org.eclipse.ditto.things.model.Thing;
 
 import application.CarClientConnection;
 import application.SimCar;

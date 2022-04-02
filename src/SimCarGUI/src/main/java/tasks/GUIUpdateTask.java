@@ -5,18 +5,15 @@ import java.util.stream.Collectors;
 
 import org.eclipse.ditto.things.model.Features;
 import org.eclipse.ditto.things.model.Thing;
-import org.eclipse.ditto.things.model.signals.commands.query.RetrieveThing;
 
 import application.SimCar;
 
 public class GUIUpdateTask implements Runnable{
 
     private SimCar simulationCar;
-    private int i;
     
     public GUIUpdateTask(SimCar simulation) {
         this.simulationCar = simulation;
-        i = 0;
     }
     
     @Override

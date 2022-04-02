@@ -61,6 +61,7 @@ public class RetrieveThingProperty {
         return engine_status;
     }
     
+    @SuppressWarnings("unused")
     private Optional<Boolean> retrieveIndicatorLight(String part){
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
