@@ -43,15 +43,9 @@ public class SimCar {
         Optional<Boolean> engine_status = controller.getClientConnection().getRetrieveProperty().retrieveEngineStatus();
         if(engine_status.isPresent()) {
             if(!engine_status.get()) {
-                System.out.println("going to the charging column...");
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
                 System.out.println("charging the car...");
                 try {
-                    Thread.sleep(2000);
+                    Thread.sleep(3000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
