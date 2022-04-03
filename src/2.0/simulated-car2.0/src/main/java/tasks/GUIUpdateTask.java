@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 import org.eclipse.ditto.things.model.Features;
 import org.eclipse.ditto.things.model.Thing;
 
-import application.SimCar;
+import car.SimCar;
 
 public class GUIUpdateTask implements Runnable{
 

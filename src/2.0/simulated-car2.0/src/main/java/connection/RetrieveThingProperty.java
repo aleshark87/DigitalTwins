@@ -1,4 +1,4 @@
-package application;
+package connection;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

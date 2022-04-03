@@ -1,8 +1,7 @@
 package controller;
 
-import application.CarClientConnection;
-import application.SimCar;
-import guicontroller.UIController;
+import car.SimCar;
+import connection.CarClientConnection;
 
 public class CarSimController {
     

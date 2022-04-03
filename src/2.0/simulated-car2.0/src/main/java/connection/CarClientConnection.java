@@ -1,4 +1,4 @@
-package application;
+package connection;
 
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DittoClient;

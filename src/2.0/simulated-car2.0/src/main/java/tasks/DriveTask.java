@@ -2,8 +2,8 @@ package tasks;
 
 import java.util.Optional;
 
-import application.CarClientConnection;
-import application.SimCar;
+import car.SimCar;
+import connection.CarClientConnection;
 
 public class DriveTask implements Runnable{
 
