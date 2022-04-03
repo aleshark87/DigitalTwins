@@ -1,6 +1,5 @@
 package application;
 
-import org.eclipse.ditto.base.model.common.HttpStatus;
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DittoClient;
 import org.eclipse.ditto.client.DittoClients;
@@ -11,15 +10,11 @@ import org.eclipse.ditto.client.messaging.AuthenticationProvider;
 import org.eclipse.ditto.client.messaging.AuthenticationProviders;
 import org.eclipse.ditto.client.messaging.MessagingProvider;
 import org.eclipse.ditto.client.messaging.MessagingProviders;
-import org.eclipse.ditto.json.JsonFactory;
-import org.eclipse.ditto.protocol.Adaptable;
-import org.eclipse.ditto.protocol.JsonifiableAdaptable;
-import org.eclipse.ditto.protocol.ProtocolFactory;
 import org.eclipse.ditto.things.model.ThingId;
 
 import com.neovisionaries.ws.client.WebSocket;
 
-import controllers.CarSimController;
+import controller.CarSimController;
 
 public class CarClientConnection {
     
@@ -52,7 +47,6 @@ public class CarClientConnection {
     public CarClientConnection(CarSimController controller) {
         System.out.println("car client connection starting.\n");
         this.controller = controller;
-        
         createAuthProvider();
         createMessageProvider();
         try {
@@ -60,17 +54,18 @@ public class CarClientConnection {
                     .connect()
                     .toCompletableFuture()
                     .join();
+            retrieveProperty = new RetrieveThingProperty(client);
             connectionStatus = true;
         }catch(Exception e){
             System.out.println("Ditto connection not open.");
         };
         if(connectionStatus) {
-            if(retrieveThing().getCode() == 200) {
+            if(retrieveProperty.retrieveThing().getCode() == 200) {
                 twinStatus = true;
             }
         }
         updateProperty = new UpdateThingProperty(client, this);
-        retrieveProperty = new RetrieveThingProperty(client);
+        
     }
 
     public void sendIndicatorMessage(String part) {
@@ -83,31 +78,6 @@ public class CarClientConnection {
                                .contentType("text/plain")
                                .send();
     }
-    
-    public HttpStatus retrieveThing() {
-        
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
-                        + "  \"headers\": {\n"
-                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                        + "  },\n"
-                        + "  \"path\": \"/\"\n"
-                        + "}\n"
-                        + "").asObject());
-        HttpStatus p = null;
-        
-        try {
-            Adaptable adapt = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
-            p = adapt.getPayload().getHttpStatus().get();
-            System.out.println(adapt.getPayload().getValue().get());
-            //System.out.println(p.getCode());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return p;
-    }
-    
     
     public UpdateThingProperty getUpdateProperty() {
         return this.updateProperty;

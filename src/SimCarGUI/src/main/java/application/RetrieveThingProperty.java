@@ -3,6 +3,7 @@ package application;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.ditto.base.model.common.HttpStatus;
 import org.eclipse.ditto.client.DittoClient;
 import org.eclipse.ditto.json.JsonFactory;
 import org.eclipse.ditto.protocol.Adaptable;
@@ -14,7 +15,28 @@ public class RetrieveThingProperty {
     
     public RetrieveThingProperty(final DittoClient client) {
         this.client = client;
+    }
+    
+    public HttpStatus retrieveThing() {
+        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+                JsonFactory.readFrom("{\n"
+                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
+                        + "  \"headers\": {\n"
+                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                        + "  },\n"
+                        + "  \"path\": \"/\"\n"
+                        + "}\n"
+                        + "").asObject());
+        HttpStatus p = null;
         
+        try {
+            Adaptable adapt = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
+            p = adapt.getPayload().getHttpStatus().get();
+            System.out.println(adapt.getPayload().getValue().get());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return p;
     }
     
     public Optional<Double> retrieveCarChargeLevel() {
@@ -55,7 +77,7 @@ public class RetrieveThingProperty {
             engine_status = Optional.of(adapt.getPayload().getValue().get().asBoolean());
             //System.out.println(charge_level);
         } catch (Exception e) {
-            System.out.println("Failed to retrieve chargelevel");
+            System.out.println("Failed to retrieve enginestatus");
             engine_status = Optional.empty();
         }
         return engine_status;
@@ -77,8 +99,8 @@ public class RetrieveThingProperty {
             var adapt = complFuture.join();
             indicator_light = Optional.of(adapt.getPayload().getValue().get().asBoolean());
         } catch(Exception e) {
+            System.out.println("Failed to retrieve indicatorlight");
             indicator_light = Optional.empty();
-            e.printStackTrace();
         }
         return indicator_light;
     }
@@ -98,8 +120,8 @@ public class RetrieveThingProperty {
             var adapt = complFuture.join();
             wear_level = Optional.of(adapt.getPayload().getValue().get().asInt());
         } catch(Exception e) {
+            System.out.println("Failed to retrieve wearlevel");
             wear_level = Optional.empty();
-            e.printStackTrace();
         }
         return wear_level;
     }

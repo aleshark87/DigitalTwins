@@ -1,6 +1,6 @@
-package guicontrollers;
+package guicontroller;
 
-import controllers.CarSimController;
+import controller.CarSimController;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;

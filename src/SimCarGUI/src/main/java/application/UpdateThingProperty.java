@@ -17,9 +17,7 @@ public class UpdateThingProperty {
         this.connection = connection;
     }
     
-    //Shadowing Status Engine
     public void updateCarEngine(final boolean state) {
-        //System.out.println("state " + state);
         JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
                         + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
@@ -36,7 +34,6 @@ public class UpdateThingProperty {
         }
     }
     
-    //Shadowing Status Charge-Level
     public void updateCarChargeLevel(final double decrease) {
         Optional<Double> charge_level = connection.getRetrieveProperty().retrieveCarChargeLevel();
         JsonifiableAdaptable jsonifiableAdaptable = null;
@@ -69,7 +66,12 @@ public class UpdateThingProperty {
                             + "  \"value\": " + "ERROR" + "\n"
                             + "}").asObject());
         }
-        client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
+        try {
+            client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        
     }
     
     public void updatechargeCarFull() {
@@ -82,7 +84,12 @@ public class UpdateThingProperty {
                         + "  \"path\": \"/features/status/properties/charge-level\",\n"
                         + "  \"value\": " + 100.0 + "\n"
                         + "}").asObject());
-        client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
+        try {
+            client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        
     }
     
     public void updateWearLevel(final int increase, final String part) {
@@ -104,7 +111,12 @@ public class UpdateThingProperty {
                             + "  \"path\": \"/features/wear-time/properties/"+part+"\",\n"
                             + "  \"value\": " + newLevel + "\n"
                             + "}").asObject());
-            client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
+            try {
+                client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().join();
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+            
         }
         else {
             System.out.println("Had problems retrieving the wear_level");
