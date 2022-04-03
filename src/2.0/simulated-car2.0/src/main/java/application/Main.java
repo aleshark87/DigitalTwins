@@ -16,7 +16,7 @@ public final class Main extends Application {
 
     @Override
     public void start(final Stage stage) throws Exception {
-        final Parent root = FXMLLoader.load(ClassLoader.getSystemResource("layouts/car2.fxml"));
+        final Parent root = FXMLLoader.load(ClassLoader.getSystemResource("layouts/car.fxml"));
         final Scene scene = new Scene(root, SCENE_WIDTH, SCENE_HEIGHT);
         // Stage configuration
         stage.setTitle("Simulated Car");
