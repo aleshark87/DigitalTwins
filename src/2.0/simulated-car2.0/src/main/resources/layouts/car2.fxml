@@ -39,56 +39,74 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox prefHeight="576.0" prefWidth="720.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="guicontroller.UIController">
+<VBox prefHeight="576.0" prefWidth="720.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.UIController">
   <children>
     <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" VBox.vgrow="ALWAYS">
          <children>
             <Button fx:id="btnStart" layoutX="101.0" layoutY="462.0" mnemonicParsing="false" onAction="#startBtnClicked" prefHeight="50.0" prefWidth="100.0" text="START" AnchorPane.leftAnchor="101.0" />
             <Button fx:id="stopBtn" layoutX="537.0" layoutY="462.0" mnemonicParsing="false" onAction="#stopBtnClicked" prefHeight="50.0" prefWidth="100.0" text="STOP" AnchorPane.rightAnchor="83.0" />
             <Button fx:id="btnCharge" layoutX="319.0" layoutY="462.0" mnemonicParsing="false" onAction="#chargeBtnClicked" prefHeight="50.0" prefWidth="100.0" text="CHARGE" />
-            <VBox alignment="TOP_CENTER" layoutX="100.0" prefHeight="463.0" prefWidth="202.0" spacing="80.0">
+            <VBox alignment="TOP_CENTER" layoutX="100.0" prefHeight="463.0" prefWidth="202.0" spacing="50.0">
                <children>
-                  <Label fx:id="label_11" alignment="CENTER" prefHeight="30.0" prefWidth="150.0" text="Label" VBox.vgrow="ALWAYS">
+                  <Label fx:id="label_11" prefHeight="30.0" prefWidth="200.0" text="Label" VBox.vgrow="ALWAYS">
                      <font>
-                        <Font name="Gargi" size="14.0" />
+                        <Font name="Gargi" size="18.0" />
                      </font>
+                     <padding>
+                        <Insets left="15.0" />
+                     </padding>
                   </Label>
-                  <Label fx:id="label_12" alignment="CENTER" prefHeight="30.0" prefWidth="150.0" text="Label">
+                  <Label fx:id="label_12" prefHeight="30.0" prefWidth="200.0" text="Label" VBox.vgrow="ALWAYS">
                      <font>
-                        <Font name="Gargi" size="14.0" />
+                        <Font name="Gargi" size="18.0" />
                      </font>
+                     <padding>
+                        <Insets left="15.0" />
+                     </padding>
                   </Label>
-                  <Label fx:id="label_13" alignment="CENTER" prefHeight="30.0" prefWidth="150.0" text="Label">
+                  <Label fx:id="label_13" prefHeight="30.0" prefWidth="200.0" text="Label">
                      <font>
-                        <Font name="Gargi" size="14.0" />
+                        <Font name="Gargi" size="18.0" />
                      </font>
+                     <padding>
+                        <Insets left="15.0" />
+                     </padding>
                   </Label>
                </children>
                <padding>
                   <Insets top="80.0" />
                </padding>
             </VBox>
-            <VBox alignment="TOP_CENTER" layoutX="415.0" prefHeight="463.0" prefWidth="222.0" spacing="80.0">
-               <children>
-                  <Label fx:id="label_21" alignment="CENTER" prefHeight="30.0" prefWidth="150.0" text="Label" VBox.vgrow="ALWAYS">
-                     <font>
-                        <Font name="Gargi" size="14.0" />
-                     </font>
-                  </Label>
-                  <Label fx:id="label_22" alignment="CENTER" prefHeight="30.0" prefWidth="150.0" text="Label" VBox.vgrow="ALWAYS">
-                     <font>
-                        <Font name="Gargi" size="14.0" />
-                     </font>
-                  </Label>
-                  <Label fx:id="label_22" alignment="CENTER" prefHeight="30.0" prefWidth="150.0" text="Label" VBox.vgrow="ALWAYS">
-                     <font>
-                        <Font name="Gargi" size="14.0" />
-                     </font>
-                  </Label>
-               </children>
+            <VBox alignment="TOP_CENTER" layoutX="415.0" prefHeight="463.0" prefWidth="222.0" spacing="50.0">
                <padding>
                   <Insets top="80.0" />
                </padding>
+               <children>
+                  <Label fx:id="label_21" prefHeight="30.0" prefWidth="200.0" text="Label">
+                     <font>
+                        <Font name="Gargi" size="18.0" />
+                     </font>
+                     <padding>
+                        <Insets left="15.0" />
+                     </padding>
+                  </Label>
+                  <Label fx:id="label_22" prefHeight="30.0" prefWidth="200.0" text="Label">
+                     <font>
+                        <Font name="Gargi" size="18.0" />
+                     </font>
+                     <padding>
+                        <Insets left="15.0" />
+                     </padding>
+                  </Label>
+                  <Label fx:id="label_23" prefHeight="30.0" prefWidth="200.0" text="Label">
+                     <font>
+                        <Font name="Gargi" size="18.0" />
+                     </font>
+                     <padding>
+                        <Insets left="15.0" />
+                     </padding>
+                  </Label>
+               </children>
             </VBox>
          </children>
     </AnchorPane>

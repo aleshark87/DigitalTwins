@@ -18,13 +18,13 @@ public class CarSimController {
             else {
                 String errorMsg = "Can't start car simulation without twin online";
                 System.out.println(errorMsg);
-                view.updateTextArea(errorMsg);
+                //view.updateTextArea(errorMsg);
             }
         }
         else {
             String errorMsg = "Can't start car simulation without ditto service";
             System.out.println(errorMsg);
-            view.updateTextArea(errorMsg);
+            //view.updateTextArea(errorMsg);
         }
         this.view = view; 
     }

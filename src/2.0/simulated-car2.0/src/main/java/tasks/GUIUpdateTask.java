@@ -22,7 +22,7 @@ public class GUIUpdateTask implements Runnable{
                 getThingFeatures().getFeature("indicator-light").get().getProperties().get().toString() + "\n"+
                 getThingFeatures().getFeature("wear-time").get().getProperties().get().toString();
         
-        simulationCar.getController().getView().updateTextArea(allFeatureProperties); 
+        simulationCar.getController().getView().updateTextArea(getThingFeatures()); 
     }
      
     private Features getThingFeatures() {
