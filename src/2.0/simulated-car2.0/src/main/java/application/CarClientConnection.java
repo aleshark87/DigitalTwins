@@ -1,38 +1,31 @@
 package application;
 
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-
-import org.eclipse.ditto.base.model.common.HttpStatus;
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DittoClient;
 import org.eclipse.ditto.client.DittoClients;
 import org.eclipse.ditto.client.configuration.BasicAuthenticationConfiguration;
 import org.eclipse.ditto.client.configuration.MessagingConfiguration;
 import org.eclipse.ditto.client.configuration.WebSocketMessagingConfiguration;
-import org.eclipse.ditto.client.live.LiveThingHandle;
 import org.eclipse.ditto.client.messaging.AuthenticationProvider;
 import org.eclipse.ditto.client.messaging.AuthenticationProviders;
 import org.eclipse.ditto.client.messaging.MessagingProvider;
 import org.eclipse.ditto.client.messaging.MessagingProviders;
-import org.eclipse.ditto.json.JsonFactory;
-import org.eclipse.ditto.protocol.Adaptable;
-import org.eclipse.ditto.protocol.JsonifiableAdaptable;
-import org.eclipse.ditto.protocol.ProtocolFactory;
 import org.eclipse.ditto.things.model.ThingId;
 
 import com.neovisionaries.ws.client.WebSocket;
 
-import controller.RunCarSimulation;
+import controller.CarSimController;
 
 public class CarClientConnection {
     
-    private RunCarSimulation controller;
+    private CarSimController controller;
     private AuthenticationProvider<WebSocket> authenticationProvider;
     private MessagingProvider messagingProvider;
     private DittoClient client;
-    private CarHttpRequests httpRequests;
-    private boolean twinOnline = false;
+    private UpdateThingProperty updateProperty;
+    private RetrieveThingProperty retrieveProperty;
+    private boolean connectionStatus = false;
+    private boolean twinStatus = false;
     
     private void createAuthProvider() {
         authenticationProvider = AuthenticationProviders.basic((
@@ -51,106 +44,65 @@ public class CarClientConnection {
         messagingProvider = MessagingProviders.webSocket(builder.build(), authenticationProvider);
     }
     
-    public CarClientConnection(RunCarSimulation controller) {
+    public CarClientConnection(CarSimController controller) {
+        System.out.println("car client connection starting.\n");
         this.controller = controller;
-        httpRequests = new CarHttpRequests();
-        createDittoClient();
-        if(checkIfThingExists().getCode() == 404) {
-            System.out.println("Car simulation can't start without its twin online.");
-        }
-        else {
-            twinOnline = true;
-            //httpRequests.getFeatureEndpoints();
-            //subscribeForMessages();
-        }
-        
-    }
-    
-    public boolean isTwinOnline() {
-        return this.twinOnline;
-    }
-    
-    private void createDittoClient() {
         createAuthProvider();
         createMessageProvider();
-        client = DittoClients.newInstance(messagingProvider)
-                .connect()
-                .toCompletableFuture()
-                .join();
-    }
-    
-  
-    }
-    
-private HttpStatus checkIfThingExists() {
-        
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/retrieve\",\n"
-                        + "  \"headers\": {\n"
-                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                        + "  },\n"
-                        + "  \"path\": \"/\"\n"
-                        + "}\n"
-                        + "").asObject());
-        HttpStatus p = null;
-        
         try {
-            Adaptable adapt = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture().get();
-            p = adapt.getPayload().getHttpStatus().get();
-            if(p.getCode() == 404) {
-                System.out.println(adapt.getPayload().getValue().get());
+            client = DittoClients.newInstance(messagingProvider)
+                    .connect()
+                    .toCompletableFuture()
+                    .join();
+            retrieveProperty = new RetrieveThingProperty(client);
+            connectionStatus = true;
+        }catch(Exception e){
+            System.out.println("Ditto connection not open.");
+        };
+        if(connectionStatus) {
+            if(retrieveProperty.retrieveThing().getCode() == 200) {
+                twinStatus = true;
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
         }
-        return p;
-    }
-    
-    
-    
-    //Shadowing tempo di manutenzione
-    public void updateMaintenanceTime(int time) {
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"io.eclipseprojects.ditto/car/things/twin/commands/modify\",\n"
-                        + "  \"headers\": {\n"
-                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                        + "  },\n"
-                        + "  \"path\": \"/features/parts_maintenance/properties/engine\",\n"
-                        + "  \"value\": " + time + "\n"
-                        + "}").asObject());
-        client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
-            if (a != null) {
-                //System.out.println(a);
-            }
-            if (t != null) {
-                System.out.println("sendDittoProtocol: Received throwable as response" + t);
-            }
-        });
+        updateProperty = new UpdateThingProperty(client, this);
+        
     }
 
-    //Shadowing Tempo Motore
-    public void updateCarEngine(final int counter) {
-        JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
-                JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"org.eclipse.ditto/car/things/twin/commands/modify\",\n"
-                        + "  \"headers\": {\n"
-                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
-                        + "  },\n"
-                        + "  \"path\": \"/features/parts_time/properties/engine\",\n"
-                        + "  \"value\": " + counter + "\n"
-                        + "}").asObject());
-        client.sendDittoProtocol(jsonifiableAdaptable).whenComplete((a, t) -> {
-            if (a != null) {
-                //System.out.println(a);
-            }
-            if (t != null) {
-                System.out.println("sendDittoProtocol: Received throwable as response" + t);
-            }
-        });
+    public void sendIndicatorMessage(String part) {
+        //System.out.println("sending message " + part);
+        ThingId thingId = ThingId.of("io.eclipseprojects.ditto", "car");
+        client.live().message()
+                               .to(thingId)
+                               .subject("car.maintenance")
+                               .payload(part)
+                               .contentType("text/plain")
+                               .send();
+    }
+    
+    public UpdateThingProperty getUpdateProperty() {
+        return this.updateProperty;
+    }
+    
+    public RetrieveThingProperty getRetrieveProperty() {
+        return this.retrieveProperty;
+    }
+    
+    public CarSimController getSimController() {
+        return this.controller;
+    }
+    
+    public DittoClient getDittoClient() {
+        return this.client;
+    }
+    
+    //Returns True if the client is connected to ditto endpoint, False otherwards.
+    public boolean getConnStatus() {
+        return this.connectionStatus;
+    }
+    
+    //Returns True if the twin exists is, False otherwards.
+    public boolean getTwinStatus() {
+        return this.twinStatus;
     }
 
 }
