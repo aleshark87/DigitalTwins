@@ -32,9 +32,11 @@ public class HttpRequester {
         //System.out.println(createThing());
         getAndSetThingDescription();
         if(setSerialNumber() == 204) {
-        	System.out.println("Set Serial Number Had Success.");
+        	System.out.println("Set Serial Number had success.");
         };
-        setLampStatus();
+        if(setLampStatus(true) == 204) {
+        	System.out.println("Set Lamp Status had success.");
+        }
     }
     
     public int createThing() {
@@ -66,7 +68,7 @@ public class HttpRequester {
     }
     
     public int setSerialNumber() {
-    	System.out.println("Setting Serial number");
+    	System.out.println("Setting Serial number..");
     	var endpoint = thingDescript.getAttributeEndPoint().get(1);
     	List<Pair<String, String>> headersList = List.of(Pair.with("Content-Type", "application/merge-patch+json"), Pair.with("Authorization", basicAuthPayload));
     	var response = makeHttpRequest(
@@ -74,10 +76,14 @@ public class HttpRequester {
     	return response.getValue0();
     }
     
-    public int setLampStatus() {
-    	var endpoint = thingDescript.getLampStatusFeatureEndPoint();
-    	System.out.println(endpoint);
-    	return 0;
+    public int setLampStatus(boolean value) {
+    	System.out.println("Setting Lamp Status..");
+    	var endpoint = thingDescript.getLampStatusFeatureEndPoint().get(1);
+    	String uri = uriBase + thingDescript.getFeatureHref().get(0) + endpoint.getValue0();
+    	List<Pair<String, String>> headersList = List.of(Pair.with("Content-Type", "application/merge-patch+json"), Pair.with("Authorization", basicAuthPayload));
+    	var response = makeHttpRequest(
+    			uri, true, headersList, endpoint.getValue1(), Optional.of(BodyPublishers.ofString(String.valueOf(value))));
+    	return response.getValue0();
     }
     
     private Pair<Integer, String> makeHttpRequest(String URI, boolean explodeURI, List<Pair<String, String>> headersList, String requestType, Optional<BodyPublisher> body) {
