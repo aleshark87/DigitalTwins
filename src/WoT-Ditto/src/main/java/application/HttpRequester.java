@@ -8,6 +8,7 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Base64;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,8 +30,11 @@ public class HttpRequester {
     public HttpRequester() {
         client = HttpClient.newHttpClient();
         //System.out.println(createThing());
-        getThingDescription();
-        setSerialNumber();
+        getAndSetThingDescription();
+        if(setSerialNumber() == 204) {
+        	System.out.println("Set Serial Number Had Success.");
+        };
+        setLampStatus();
     }
     
     public int createThing() {
@@ -44,20 +48,35 @@ public class HttpRequester {
         return response.getValue0();
     }
     
-    public int getThingDescription() {
+    public int getAndSetThingDescription() {
     	List<Pair<String, String>> headersList = 
 				Stream.of(Pair.with("Accept", "application/td+json"), Pair.with("Authorization", basicAuthPayload))
 				.collect(Collectors.toList());
-    	var response = makeHttpRequest(uriBase, false, headersList, "GET", Optional.empty());
-    	
-    	thingDescript = new ThingDescription(response.getValue1());
+    	var responseThing = makeHttpRequest(uriBase, false, headersList, "GET", Optional.empty());
+    	thingDescript = new ThingDescription(responseThing.getValue1());
+    	List<String> listFeatureHref = thingDescript.getFeatureHref();
+    	List<String> listFeatureDesc = new LinkedList<>();
+    	for(String feat: listFeatureHref) {
+    		var responseFeature = makeHttpRequest((uriBase + feat), false, headersList, "GET", Optional.empty());
+    		listFeatureDesc.add(responseFeature.getValue1());
+    	}
+    	thingDescript.setFeatureDescription(listFeatureDesc);
     	uriVariables = thingDescript.getURIVariables();
-    	return response.getValue0();
+    	return responseThing.getValue0();
     }
     
     public int setSerialNumber() {
+    	System.out.println("Setting Serial number");
     	var endpoint = thingDescript.getAttributeEndPoint().get(1);
-    	
+    	List<Pair<String, String>> headersList = List.of(Pair.with("Content-Type", "application/merge-patch+json"), Pair.with("Authorization", basicAuthPayload));
+    	var response = makeHttpRequest(
+    			uriBase + endpoint.getValue0(), true, headersList, endpoint.getValue1(), Optional.of(BodyPublishers.ofString(Integer.toString(1))));
+    	return response.getValue0();
+    }
+    
+    public int setLampStatus() {
+    	var endpoint = thingDescript.getLampStatusFeatureEndPoint();
+    	System.out.println(endpoint);
     	return 0;
     }
     
@@ -85,11 +104,8 @@ public class HttpRequester {
         	    break;
         	  case "PATCH":
         		  if(body.isPresent()) {
-        			  //https://stackoverflow.com/questions/58841919/java-11-httprequest-with-patch-method
-        			  //builder = builder.PA
+        			  builder = builder.method("PATCH", body.get());
         		  }
-        	  default:
-        		  throw new Exception("Requesttype not found");
         	}
         	HttpRequest req = builder.build();
         	response = client.send(req, BodyHandlers.ofString());
@@ -102,6 +118,9 @@ public class HttpRequester {
     }
     
     private String explodeURI(String uriToExplode) {
+    	if(uriToExplode.contains("response-required")) {
+    		uriToExplode = uriToExplode.replace("-r", "R");
+    	}
     	UriTemplate template = UriTemplate.fromTemplate(uriToExplode);
     	for(var uriVariable: uriVariables) {
     		template = template.set(uriVariable);
