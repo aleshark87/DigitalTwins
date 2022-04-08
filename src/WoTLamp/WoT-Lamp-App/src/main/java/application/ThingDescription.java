@@ -88,6 +88,7 @@ public class ThingDescription {
 	public List<Pair<String, String>> getLampStatusFeatureEndPoint(){
 		Pair<String, String> readEndPoints = null;
 		Pair<String, String> writeEndPoints = null;
+		
 		JSONArray opArray = jsonObjFeatures.get(0).getJSONObject("properties").getJSONObject("lamp-status").getJSONArray("forms");
 		for(int i = 0; i < opArray.length(); i++) {
 			JSONObject obj = opArray.getJSONObject(i);

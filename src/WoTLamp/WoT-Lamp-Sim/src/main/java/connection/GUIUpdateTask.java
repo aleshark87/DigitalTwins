@@ -1,36 +1,28 @@
 package connection;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.eclipse.ditto.things.model.Features;
-import org.eclipse.ditto.things.model.Thing;
-
 import controller.LampSimController;
+import javafx.scene.image.Image;
 
 public class GUIUpdateTask implements Runnable{
 
     private LampSimController controller;
-    private String namespace;
     
-    public GUIUpdateTask(LampSimController controller, String namespace) {
+    public GUIUpdateTask(LampSimController controller) {
         this.controller = controller;
-        this.namespace = namespace;
     }
     
     @Override
     public void run() {
-        String allFeatureProperties = getThingFeatures().getFeature("status").get().getProperties().get().toString() + "\n";
-        
-        controller.getView().update(allFeatureProperties); 
-    }
-     
-    private Features getThingFeatures() {
-        List<Thing> list = controller.getConnection().getDittoClient().twin()
-                                 .search()
-                                 .stream(queryBuilder -> queryBuilder.namespace(namespace))
-                                 .collect(Collectors.toList());
-        return list.get(0).getFeatures().get();
+    	Image image;
+    	boolean lamp_status = controller.getConnection().getRetrieveThing().retrieveLampStatus().get();
+    	if(lamp_status) {
+    		image = new Image("icons/lamp_on.png");
+    	}
+    	else {
+    		image = new Image("icons/lamp_off.png");
+    	}
+        //String featureProperty = "Lamp Status: " + lamp_status;
+        controller.getView().update("", image); 
     }
     
     

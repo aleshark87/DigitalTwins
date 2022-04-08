@@ -13,7 +13,6 @@ public class LampSimController {
         if(connection.getConnStatus()) {
             if(connection.getTwinStatus()) {
                 lampSimulation = new SimLamp(this);
-                connection.getUpdateThing().updateLampStatus(false);
             }
             else {
                 String errorMsg = "Can't start lamp simulation without twin online";
