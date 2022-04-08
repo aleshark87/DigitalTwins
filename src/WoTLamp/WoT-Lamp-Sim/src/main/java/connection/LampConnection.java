@@ -1,15 +1,19 @@
 package connection;
 
+import java.util.Optional;
+
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DittoClient;
 import org.eclipse.ditto.client.DittoClients;
 import org.eclipse.ditto.client.configuration.BasicAuthenticationConfiguration;
 import org.eclipse.ditto.client.configuration.MessagingConfiguration;
 import org.eclipse.ditto.client.configuration.WebSocketMessagingConfiguration;
+import org.eclipse.ditto.client.live.LiveThingHandle;
 import org.eclipse.ditto.client.messaging.AuthenticationProvider;
 import org.eclipse.ditto.client.messaging.AuthenticationProviders;
 import org.eclipse.ditto.client.messaging.MessagingProvider;
 import org.eclipse.ditto.client.messaging.MessagingProviders;
+import org.eclipse.ditto.things.model.ThingId;
 
 import com.neovisionaries.ws.client.WebSocket;
 import controller.LampSimController;
@@ -64,7 +68,24 @@ public class LampConnection {
             }
         }
         update = new UpdateThing(client, namespace, id);
-        
+        subscribeForMessages();
+    }
+    
+    //I messaggi funzionano. Bisogna prendere dalla thingDescription l'endpoint per l'azione 
+    private void subscribeForMessages() {
+    	System.out.println("Subscribing for messages");
+        try {
+            client.live().startConsumption().toCompletableFuture().get();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        ThingId thingId = ThingId.of(namespace, id);
+        final LiveThingHandle thingIdLive = client.live().forId(thingId);
+        // Register for *all* messages of a *specific* thing and provide payload as String
+        thingIdLive.registerForMessage("msg_maintenance", "msg.test", String.class, message -> {
+            final Optional<String> payload = message.getPayload();
+            System.out.println(payload.get());
+        });
     }
     
     public RetrieveThing getRetrieveThing() {
