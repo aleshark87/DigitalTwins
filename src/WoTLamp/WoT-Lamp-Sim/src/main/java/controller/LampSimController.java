@@ -27,4 +27,12 @@ public class LampSimController {
         }
         this.view = view; 
 	}
+	
+	public LampConnection getConnection() {
+		return this.connection;
+	}
+	
+	public SimLamp getLampSim() {
+		return this.lampSimulation;
+	}
 }

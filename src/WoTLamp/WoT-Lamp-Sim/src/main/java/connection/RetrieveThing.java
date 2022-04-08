@@ -1,5 +1,8 @@
 package connection;
 
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
 import org.eclipse.ditto.base.model.common.HttpStatus;
 import org.eclipse.ditto.client.DittoClient;
 import org.eclipse.ditto.json.JsonFactory;
@@ -21,7 +24,7 @@ public class RetrieveThing {
 	public int retrieveThing() {
 		JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
                 JsonFactory.readFrom("{\n"
-                        + "  \"topic\": \"" + namespace + "/lamp/things/twin/commands/retrieve\",\n"
+                        + "  \"topic\": \"" + namespace + "/" + id + "/things/twin/commands/retrieve\",\n"
                         + "  \"headers\": {\n"
                         + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                         + "  },\n"
@@ -38,5 +41,27 @@ public class RetrieveThing {
             e.printStackTrace();
         }
         return p.getCode();
+	}
+	
+	public Optional<Boolean> retrieveLampStatus() {
+		JsonifiableAdaptable jsonifiableAdaptable = ProtocolFactory.jsonifiableAdaptableFromJson(
+                JsonFactory.readFrom("{\n"
+                        + "  \"topic\": \"" + namespace + "/" + id + "/things/twin/commands/retrieve\",\n"
+                        + "  \"headers\": {\n"
+                        + "    \"correlation-id\": \"<command-correlation-id>\"\n"
+                        + "  },\n"
+                        + "  \"path\": \"/features/status/properties/lamp-status\"\n"
+                        + "}\n").asObject());
+        Optional<Boolean> lamp_status = Optional.empty();
+        try {
+            CompletableFuture<Adaptable> complFuture = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture();
+            var adapt = complFuture.join();
+            lamp_status = Optional.of(adapt.getPayload().getValue().get().asBoolean());
+            //System.out.println(charge_level);
+        } catch (Exception e) {
+            System.out.println("Failed to retrieve chargelevel");
+            lamp_status = Optional.empty();
+        }
+        return lamp_status;
 	}
 }

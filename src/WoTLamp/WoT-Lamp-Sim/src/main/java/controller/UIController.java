@@ -10,4 +10,10 @@ public class UIController {
 	private void initialize() {
 		controller = new LampSimController(this);
 	}
+	
+	@FXML
+	private void switchBtnClicked() {
+		controller.getLampSim().switchLamp();
+	}
+	
 }

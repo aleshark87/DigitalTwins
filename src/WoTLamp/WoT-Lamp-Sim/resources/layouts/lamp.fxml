@@ -3,9 +3,8 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.layout.AnchorPane?>
 
-
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="576.0" prefWidth="720.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="576.0" prefWidth="720.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.UIController">
    <children>
-      <Button layoutX="310.0" layoutY="428.0" mnemonicParsing="false" prefHeight="50.0" prefWidth="100.0" text="SWITCH" />
+      <Button layoutX="310.0" layoutY="428.0" mnemonicParsing="false" onAction="#switchBtnClicked" prefHeight="50.0" prefWidth="100.0" text="SWITCH" />
    </children>
 </AnchorPane>

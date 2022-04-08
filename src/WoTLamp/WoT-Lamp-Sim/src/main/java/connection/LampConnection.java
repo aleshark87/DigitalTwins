@@ -18,13 +18,13 @@ public class LampConnection {
 	private AuthenticationProvider<WebSocket> authenticationProvider;
     private MessagingProvider messagingProvider;
     private DittoClient client;
-    //private UpdateThingProperty updateProperty;
-    private RetrieveThing retrieveProperty;
+    private UpdateThing update;
+    private RetrieveThing retrieve;
     private LampSimController controller;
     private boolean connectionStatus = false;
     private boolean twinStatus = false;
     private final String namespace = "projects.wot.ditto";
-    private final String id = "lamp";
+    private final String id = "lamp2";
     
     private void createAuthProvider() {
         authenticationProvider = AuthenticationProviders.basic((
@@ -53,18 +53,26 @@ public class LampConnection {
                     .connect()
                     .toCompletableFuture()
                     .join();
-            retrieveProperty = new RetrieveThing(client, namespace, id);
+            retrieve = new RetrieveThing(client, namespace, id);
             connectionStatus = true;
         }catch(Exception e){
             System.out.println("Ditto connection not open.");
         };
         if(connectionStatus) {
-            if(retrieveProperty.retrieveThing() == 200) {
+            if(retrieve.retrieveThing() == 200) {
                 twinStatus = true;
             }
         }
-        //updateProperty = new UpdateThingProperty(client, this);
+        update = new UpdateThing(client, namespace, id);
         
+    }
+    
+    public RetrieveThing getRetrieveThing() {
+		return retrieve;
+    }
+    
+    public UpdateThing getUpdateThing() {
+    	return update;
     }
     
   //Returns True if the client is connected to ditto endpoint, False otherwards.

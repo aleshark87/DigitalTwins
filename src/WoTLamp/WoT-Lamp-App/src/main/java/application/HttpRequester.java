@@ -25,7 +25,7 @@ public class HttpRequester {
     private HttpClient client;
     private ThingDescription thingDescript;
     private List<Map<String, Object>> uriVariables;
-    private String uriBase = "http://localhost:8080/api/2/things/projects.wot.ditto:lamp";
+    private String uriBase = "http://localhost:8080/api/2/things/projects.wot.ditto:lamp2";
     
     public HttpRequester() {
         client = HttpClient.newHttpClient();

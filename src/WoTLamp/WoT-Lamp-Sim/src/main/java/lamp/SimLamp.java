@@ -1,5 +1,7 @@
 package lamp;
 
+import java.util.Optional;
+
 import controller.LampSimController;
 
 public class SimLamp {
@@ -11,6 +13,9 @@ public class SimLamp {
 	}
 	
 	public void switchLamp() {
-		//retrievePropertyAndSwitch
+		Optional<Boolean> lamp_status = controller.getConnection().getRetrieveThing().retrieveLampStatus();
+		if(lamp_status.isPresent()) {
+			controller.getConnection().getUpdateThing().updateLampStatus(!lamp_status.get());
+		}
 	}
 }
