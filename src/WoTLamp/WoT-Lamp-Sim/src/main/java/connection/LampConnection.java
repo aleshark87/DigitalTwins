@@ -24,7 +24,7 @@ public class LampConnection {
     private boolean connectionStatus = false;
     private boolean twinStatus = false;
     private final String namespace = "projects.wot.ditto";
-    private final String id = "lamp2";
+    private final String id = "lamp";
     
     private void createAuthProvider() {
         authenticationProvider = AuthenticationProviders.basic((
@@ -73,6 +73,14 @@ public class LampConnection {
     
     public UpdateThing getUpdateThing() {
     	return update;
+    }
+    
+    public DittoClient getDittoClient() {
+    	return this.client;
+    }
+    
+    public String getNamespace() {
+    	return this.namespace;
     }
     
   //Returns True if the client is connected to ditto endpoint, False otherwards.

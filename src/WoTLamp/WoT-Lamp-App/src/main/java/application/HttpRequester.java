@@ -25,7 +25,7 @@ public class HttpRequester {
     private HttpClient client;
     private ThingDescription thingDescript;
     private List<Map<String, Object>> uriVariables;
-    private String uriBase = "http://localhost:8080/api/2/things/projects.wot.ditto:lamp2";
+    private String uriBase = "http://localhost:8080/api/2/things/projects.wot.ditto:lamp";
     
     public HttpRequester() {
         client = HttpClient.newHttpClient();
@@ -57,6 +57,21 @@ public class HttpRequester {
     	thingDescript.setFeatureDescription(listFeatureDesc);
     	uriVariables = thingDescript.getURIVariables();
     	return responseThing.getValue0();
+    }
+    
+    public Optional<Boolean> getLampStatus() {
+    	var endpoint = thingDescript.getLampStatusFeatureEndPoint().get(0);
+    	String uri = uriBase + thingDescript.getFeatureHref().get(0) + endpoint.getValue0();
+    	List<Pair<String, String>> headersList = List.of(Pair.with("Content-Type", "application/json"), Pair.with("Authorization", basicAuthPayload));
+    	var response = makeHttpRequest(
+    			uri, true, headersList, endpoint.getValue0(), Optional.empty());
+    	if(response.getValue0() == 200) {
+    		return Optional.of(Boolean.parseBoolean(response.getValue1()));
+    	}
+    	else {
+    		return Optional.empty();
+    	}
+    	
     }
     
     private Pair<Integer, String> makeHttpRequest(String URI, boolean explodeURI, List<Pair<String, String>> headersList, String requestType, Optional<BodyPublisher> body) {

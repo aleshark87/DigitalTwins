@@ -57,9 +57,8 @@ public class RetrieveThing {
             CompletableFuture<Adaptable> complFuture = client.sendDittoProtocol(jsonifiableAdaptable).toCompletableFuture();
             var adapt = complFuture.join();
             lamp_status = Optional.of(adapt.getPayload().getValue().get().asBoolean());
-            //System.out.println(charge_level);
         } catch (Exception e) {
-            System.out.println("Failed to retrieve chargelevel");
+            System.out.println("Failed to retrieve lamp_status");
             lamp_status = Optional.empty();
         }
         return lamp_status;

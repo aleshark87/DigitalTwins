@@ -23,7 +23,7 @@ public class UpdateThing {
                         + "  \"headers\": {\n"
                         + "    \"correlation-id\": \"<command-correlation-id>\"\n"
                         + "  },\n"
-                        + "  \"path\": \"/features/status/properties/engine\",\n"
+                        + "  \"path\": \"/features/status/properties/lamp-status\",\n"
                         + "  \"value\": " + status + "\n"
                         + "}").asObject());
         try {

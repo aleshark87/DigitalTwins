@@ -18,4 +18,8 @@ public class SimLamp {
 			controller.getConnection().getUpdateThing().updateLampStatus(!lamp_status.get());
 		}
 	}
+	
+	public LampSimController getController() {
+		return this.controller;
+	}
 }
