@@ -1,6 +1,6 @@
 package application;
 
-public class Main {
+public class LampClient {
 
 	public static void main(String[] args) {
 		HttpThingRequester requester = new HttpThingRequester();

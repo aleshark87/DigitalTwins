@@ -49,6 +49,9 @@ public class HttpThingRequester {
                 + "    \"definition\": \"https://raw.githubusercontent.com/aleshark87/WoTModels/main/lamp/lamp.tm.jsonld\"\n"
                 + "}";
         var response = makeHttpRequest(uriBase, false, headersList, "PUT", Optional.of(BodyPublishers.ofString(body)));
+        if(response.getValue0() == 200 || response.getValue0() == 201 || response.getValue0() == 204) {
+        	System.out.println("Thing projects.wot.ditto:lamp created succesfully!");
+        }
         return response.getValue0();
     }
     
