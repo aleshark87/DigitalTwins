@@ -71,7 +71,6 @@ public class LampConnection {
         subscribeForMessages();
     }
     
-    //I messaggi funzionano. Bisogna prendere dalla thingDescription l'endpoint per l'azione 
     private void subscribeForMessages() {
     	System.out.println("Subscribing for messages");
         try {
@@ -85,6 +84,7 @@ public class LampConnection {
         thingIdLive.registerForMessage("msg_maintenance", "switch-lamp", String.class, message -> {
             final Optional<String> payload = message.getPayload();
             if(payload.isPresent()) {
+            	System.out.println("Message from client: switch-lamp " + payload.get());
             	controller.getLampSim().setLamp(Boolean.parseBoolean(payload.get()));
             }
         });

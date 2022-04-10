@@ -1,12 +1,8 @@
 package controller;
 
-import java.io.File;
-import java.net.URISyntaxException;
-import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 import connection.GUIUpdateTask;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -29,7 +25,7 @@ public class UIController {
 		controller = new LampSimController(this);
 		guiUpdateTask = new GUIUpdateTask(controller);
 		ScheduledExecutorService exec = Executors.newScheduledThreadPool(1);
-		exec.scheduleAtFixedRate(guiUpdateTask, 0, 1, TimeUnit.SECONDS);
+		exec.scheduleAtFixedRate(guiUpdateTask, 0, 500, TimeUnit.MILLISECONDS);
 	}
 	
 	@FXML

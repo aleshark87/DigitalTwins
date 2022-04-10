@@ -99,7 +99,6 @@ public class HttpThingRequester {
     
     public int invokeLampSwitchAction(final boolean state) {
     	var endpoint = thingDescript.getActionEndpoint("switch-lamp");
-    	System.out.println(endpoint.getValue0());
     	List<Pair<String, String>> headersList = List.of(Pair.with("Content-Type", "application/json"), Pair.with("Authorization", basicAuthPayload));
     	String body = String.valueOf(state);
     	Map<String, Object> uriVar = Map.of("timeout", 0);
