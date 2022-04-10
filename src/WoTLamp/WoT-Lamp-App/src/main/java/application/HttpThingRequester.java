@@ -83,7 +83,7 @@ public class HttpThingRequester {
     }
     
     public Optional<Boolean> getLampStatus() {
-    	var endpoint = thingDescript.getLampStatusFeatureEndPoint().get(0);
+    	var endpoint = thingDescript.getLampStatusFeatureEndpoint("lamp-status").get(0);
     	String uri = uriBase + thingDescript.getFeatureHref().get(0) + endpoint.getValue0();
     	List<Pair<String, String>> headersList = List.of(Pair.with("Content-Type", "application/json"), Pair.with("Authorization", basicAuthPayload));
     	var response = makeHttpRequest(
@@ -94,7 +94,16 @@ public class HttpThingRequester {
     	else {
     		return Optional.empty();
     	}
-    	
+    }
+    
+    public void invokeLampSwitchAction(final boolean state) {
+    	var endpoint = thingDescript.getActionEndpoint("switch-lamp");
+    	System.out.println();
+    	List<Pair<String, String>> headersList = List.of(Pair.with("Content-Type", "application/json"), Pair.with("Authorization", basicAuthPayload));
+    	String body = "\"ciao\"";
+    	var response = makeHttpRequest(
+    			uriBase + endpoint.getValue0(), true, headersList, endpoint.getValue1(), Optional.of(BodyPublishers.ofString(body)));
+    	System.out.println(response);
     }
     
     private Pair<Integer, String> makeHttpRequest(String URI, boolean explodeURI, List<Pair<String, String>> headersList, String requestType, Optional<BodyPublisher> body) {
@@ -123,6 +132,10 @@ public class HttpThingRequester {
         		  if(body.isPresent()) {
         			  builder = builder.method("PATCH", body.get());
         		  }
+        	  case "POST":
+        		  if(body.isPresent()) {
+        			  builder = builder.POST(body.get());
+        		  }
         	}
         	HttpRequest req = builder.build();
         	response = client.send(req, BodyHandlers.ofString());
@@ -134,6 +147,7 @@ public class HttpThingRequester {
         return Pair.with(response.statusCode(), response.body());
     }
     
+    //make uriVariables like headersList, with a mechanism of "non-found". If a uri is not found, rely on default value.
     private String explodeURI(String uriToExplode) {
     	if(uriToExplode.contains("response-required")) {
     		uriToExplode = uriToExplode.replace("-r", "R");

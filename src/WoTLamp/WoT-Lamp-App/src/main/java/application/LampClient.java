@@ -6,6 +6,7 @@ public class LampClient {
 		HttpThingRequester requester = new HttpThingRequester();
 		
 		System.out.println(requester.getLampStatus());
+		requester.invokeLampSwitchAction(true);
 	}
 
 }

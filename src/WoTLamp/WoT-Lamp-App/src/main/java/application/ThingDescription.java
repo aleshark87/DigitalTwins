@@ -60,7 +60,7 @@ public class ThingDescription {
 	 * 
 	 * @return List of ReadProperty endpoint and WriteProperty endpoint
 	 */
-	public List<Pair<String, String>> getAttributeEndPoint() {
+	public List<Pair<String, String>> getAttributeEndpoint() {
 		Pair<String, String> readEndPoints = null;
 		Pair<String, String> writeEndPoints = null;
 		JSONArray opArray = jsonObjThing.getJSONObject("properties").getJSONObject("serialNo").getJSONArray("forms");
@@ -85,11 +85,11 @@ public class ThingDescription {
 	 * 
 	 * @return List of ReadProperty endpoint and WriteProperty endpoint
 	 */
-	public List<Pair<String, String>> getLampStatusFeatureEndPoint(){
+	public List<Pair<String, String>> getLampStatusFeatureEndpoint(final String featureName){
 		Pair<String, String> readEndPoints = null;
 		Pair<String, String> writeEndPoints = null;
 		
-		JSONArray opArray = jsonObjFeatures.get(0).getJSONObject("properties").getJSONObject("lamp-status").getJSONArray("forms");
+		JSONArray opArray = jsonObjFeatures.get(0).getJSONObject("properties").getJSONObject(featureName).getJSONArray("forms");
 		for(int i = 0; i < opArray.length(); i++) {
 			JSONObject obj = opArray.getJSONObject(i);
 			  try {
@@ -105,6 +105,18 @@ public class ThingDescription {
 		}
 		
 		return List.of(readEndPoints, writeEndPoints);
+	}
+	
+	/**
+	 * 
+	 * @param actionName
+	 * @return Pair of HttpMethod and Href endpoint
+	 */
+	public Pair<String, String> getActionEndpoint(final String actionName){
+		JSONArray opArray = jsonObjThing.getJSONObject("actions").getJSONObject(actionName).getJSONArray("forms");
+		String href = opArray.getJSONObject(0).getString("href");
+		String httpMethod = opArray.getJSONObject(0).getString("htv:methodName");
+		return Pair.with(href, httpMethod);
 	}
 	
 	/**
