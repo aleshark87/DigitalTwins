@@ -6,6 +6,7 @@ import org.eclipse.ditto.protocol.JsonifiableAdaptable;
 import org.eclipse.ditto.protocol.ProtocolFactory;
 
 public class UpdateThing {
+	
 	private DittoClient client;
 	private final String namespace;
 	private final String id;

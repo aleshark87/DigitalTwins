@@ -71,6 +71,7 @@ public class LampConnection {
         subscribeForMessages();
     }
     
+    //Messages can be sent
     private void subscribeForMessages() {
     	System.out.println("Subscribing for messages");
         try {
@@ -81,7 +82,7 @@ public class LampConnection {
         ThingId thingId = ThingId.of(namespace, id);
         final LiveThingHandle thingIdLive = client.live().forId(thingId);
         // Register for *all* messages of a *specific* thing and provide payload as String
-        thingIdLive.registerForMessage("msg_maintenance", "switch-lamp", String.class, message -> {
+        thingIdLive.registerForMessage("msg_lamp", "switch-lamp", String.class, message -> {
             final Optional<String> payload = message.getPayload();
             if(payload.isPresent()) {
             	System.out.println("Message from client: switch-lamp " + payload.get());

@@ -4,6 +4,7 @@ import connection.LampConnection;
 import lamp.SimLamp;
 
 public class LampSimController {
+	
 	private SimLamp lampSimulation;
 	private LampConnection connection;
 	private UIController view;
@@ -17,13 +18,11 @@ public class LampSimController {
             else {
                 String errorMsg = "Can't start lamp simulation without twin online";
                 System.out.println(errorMsg);
-                //view.updateTextArea(errorMsg);
             }
         }
         else {
             String errorMsg = "Can't start lamp simulation without ditto service";
             System.out.println(errorMsg);
-            //view.updateTextArea(errorMsg);
         }
         this.view = view; 
 	}

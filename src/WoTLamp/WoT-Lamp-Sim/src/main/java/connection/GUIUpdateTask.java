@@ -21,8 +21,8 @@ public class GUIUpdateTask implements Runnable{
     	else {
     		image = new Image("icons/lamp_off.png");
     	}
-        //String featureProperty = "Lamp Status: " + lamp_status;
-        controller.getView().update("", image); 
+        String featureProperty = "Lamp Status: " + lamp_status;
+        controller.getView().update(featureProperty, image); 
     }
     
     
