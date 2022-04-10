@@ -8,6 +8,7 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class HttpThingRequester {
     	String body = "{\n"
                 + "    \"definition\": \"https://raw.githubusercontent.com/aleshark87/WoTModels/main/lamp/lamp.tm.jsonld\"\n"
                 + "}";
-        var response = makeHttpRequest(uriBase, false, headersList, "PUT", Optional.of(BodyPublishers.ofString(body)));
+        var response = makeHttpRequest(uriBase, false, Optional.empty(), headersList, "PUT", Optional.of(BodyPublishers.ofString(body)));
         if(response.getValue0() == 200 || response.getValue0() == 201 || response.getValue0() == 204) {
         	System.out.println("Thing projects.wot.ditto:lamp created succesfully!");
         }
@@ -58,7 +59,7 @@ public class HttpThingRequester {
     public int getThingDescription() {
     	List<Pair<String, String>> headersList = 
 				List.of(Pair.with("Accept", "application/td+json"), Pair.with("Authorization", basicAuthPayload));
-    	var resp = makeHttpRequest(uriBase, false, headersList, "GET", Optional.empty());
+    	var resp = makeHttpRequest(uriBase, false, Optional.empty(), headersList, "GET", Optional.empty());
     	responseThing = resp.getValue1();
     	return resp.getValue0();
     }
@@ -75,7 +76,7 @@ public class HttpThingRequester {
     	for(String feat: listFeatureHref) {
     		List<Pair<String, String>> headersList = 
     				List.of(Pair.with("Accept", "application/td+json"), Pair.with("Authorization", basicAuthPayload));
-    		var responseFeature = makeHttpRequest((uriBase + feat), false, headersList, "GET", Optional.empty());
+    		var responseFeature = makeHttpRequest((uriBase + feat), false, Optional.empty(), headersList, "GET", Optional.empty());
     		listFeatureDesc.add(responseFeature.getValue1());
     	}
     	thingDescript.setFeatureDescription(listFeatureDesc);
@@ -87,7 +88,7 @@ public class HttpThingRequester {
     	String uri = uriBase + thingDescript.getFeatureHref().get(0) + endpoint.getValue0();
     	List<Pair<String, String>> headersList = List.of(Pair.with("Content-Type", "application/json"), Pair.with("Authorization", basicAuthPayload));
     	var response = makeHttpRequest(
-    			uri, true, headersList, endpoint.getValue0(), Optional.empty());
+    			uri, true, Optional.empty(), headersList, endpoint.getValue0(), Optional.empty());
     	if(response.getValue0() == 200) {
     		return Optional.of(Boolean.parseBoolean(response.getValue1()));
     	}
@@ -98,19 +99,27 @@ public class HttpThingRequester {
     
     public void invokeLampSwitchAction(final boolean state) {
     	var endpoint = thingDescript.getActionEndpoint("switch-lamp");
-    	System.out.println();
+    	System.out.println(endpoint.getValue0());
     	List<Pair<String, String>> headersList = List.of(Pair.with("Content-Type", "application/json"), Pair.with("Authorization", basicAuthPayload));
-    	String body = "\"ciao\"";
+    	String body = String.valueOf(state);
+    	Map<String, Object> uriVar = Map.of("timeout", 0);
+    	Map<String, Object> uriVar2 = Map.of("responseRequired", false);
+    	
     	var response = makeHttpRequest(
-    			uriBase + endpoint.getValue0(), true, headersList, endpoint.getValue1(), Optional.of(BodyPublishers.ofString(body)));
-    	System.out.println(response);
+    			uriBase + endpoint.getValue0(), true, Optional.of(List.of(uriVar, uriVar2)), headersList, endpoint.getValue1(), Optional.of(BodyPublishers.ofString(body)));
     }
     
-    private Pair<Integer, String> makeHttpRequest(String URI, boolean explodeURI, List<Pair<String, String>> headersList, String requestType, Optional<BodyPublisher> body) {
+    private Pair<Integer, String> makeHttpRequest(String URI, boolean explodeURI, Optional<List<Map<String, Object>>> uriVar, 
+    												List<Pair<String, String>> headersList, String requestType, Optional<BodyPublisher> body) {
     	HttpResponse<String> response = null;
         try {
         	if(explodeURI) {
-        		URI = explodeURI(URI);
+        		if(uriVar.isPresent()) {
+        			URI = customExplodeURI(URI, uriVar.get());
+        		}
+        		else {
+        			URI = explodeURI(URI);
+        		}
         	}
         	HttpRequest.Builder builder = HttpRequest.newBuilder().uri(new URI(URI));	
         	for(int i = 0; i < headersList.size(); i++) {
@@ -147,7 +156,6 @@ public class HttpThingRequester {
         return Pair.with(response.statusCode(), response.body());
     }
     
-    //make uriVariables like headersList, with a mechanism of "non-found". If a uri is not found, rely on default value.
     private String explodeURI(String uriToExplode) {
     	if(uriToExplode.contains("response-required")) {
     		uriToExplode = uriToExplode.replace("-r", "R");
@@ -159,5 +167,14 @@ public class HttpThingRequester {
     	return template.expand();
     }
    
-    
+    private String customExplodeURI(String uriToExplode, List<Map<String, Object>> uriVar) {
+    	if(uriToExplode.contains("response-required")) {
+    		uriToExplode = uriToExplode.replace("-r", "R");
+    	}
+    	UriTemplate template = UriTemplate.fromTemplate(uriToExplode);
+    	for(var uriVariable: uriVar) {
+    		template = template.set(uriVariable);
+    	}
+    	return template.expand();
+    }
 }

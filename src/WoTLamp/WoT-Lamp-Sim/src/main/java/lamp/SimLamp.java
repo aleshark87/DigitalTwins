@@ -19,6 +19,10 @@ public class SimLamp {
 		}
 	}
 	
+	public void setLamp(boolean state) {
+		controller.getConnection().getUpdateThing().updateLampStatus(state);
+	}
+	
 	public LampSimController getController() {
 		return this.controller;
 	}

@@ -82,9 +82,11 @@ public class LampConnection {
         ThingId thingId = ThingId.of(namespace, id);
         final LiveThingHandle thingIdLive = client.live().forId(thingId);
         // Register for *all* messages of a *specific* thing and provide payload as String
-        thingIdLive.registerForMessage("msg_maintenance", "msg.test", String.class, message -> {
+        thingIdLive.registerForMessage("msg_maintenance", "switch-lamp", String.class, message -> {
             final Optional<String> payload = message.getPayload();
-            System.out.println(payload.get());
+            if(payload.isPresent()) {
+            	controller.getLampSim().setLamp(Boolean.parseBoolean(payload.get()));
+            }
         });
     }
     
