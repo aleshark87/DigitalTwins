@@ -97,7 +97,7 @@ public class HttpThingRequester {
     	}
     }
     
-    public void invokeLampSwitchAction(final boolean state) {
+    public int invokeLampSwitchAction(final boolean state) {
     	var endpoint = thingDescript.getActionEndpoint("switch-lamp");
     	System.out.println(endpoint.getValue0());
     	List<Pair<String, String>> headersList = List.of(Pair.with("Content-Type", "application/json"), Pair.with("Authorization", basicAuthPayload));
@@ -107,6 +107,7 @@ public class HttpThingRequester {
     	
     	var response = makeHttpRequest(
     			uriBase + endpoint.getValue0(), true, Optional.of(List.of(uriVar, uriVar2)), headersList, endpoint.getValue1(), Optional.of(BodyPublishers.ofString(body)));
+    	return response.getValue0();
     }
     
     private Pair<Integer, String> makeHttpRequest(String URI, boolean explodeURI, Optional<List<Map<String, Object>>> uriVar, 
@@ -141,9 +142,15 @@ public class HttpThingRequester {
         		  if(body.isPresent()) {
         			  builder = builder.method("PATCH", body.get());
         		  }
+        		  else {
+        			  System.out.println("PATCH requests require body");
+        		  }
         	  case "POST":
         		  if(body.isPresent()) {
         			  builder = builder.POST(body.get());
+        		  }
+        		  else {
+        			  System.out.println("POST requests require body");
         		  }
         	}
         	HttpRequest req = builder.build();
